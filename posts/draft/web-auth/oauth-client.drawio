@@ -1,0 +1,88 @@
+<mxfile host="65bd71144e">
+    <diagram id="asahRVXm402HO0iXxsYi" name="Page-1">
+        <mxGraphModel dx="791" dy="574" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="4" value="Client App" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="110" width="100" height="600" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;" parent="4" vertex="1">
+                    <mxGeometry x="45" y="80" width="10" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;" parent="4" vertex="1">
+                    <mxGeometry x="45" y="300" width="10" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="Authorization Server" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" parent="1" vertex="1">
+                    <mxGeometry x="470" y="110" width="100" height="600" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="Resource&lt;br&gt;Server" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" parent="1" vertex="1">
+                    <mxGeometry x="740" y="110" width="100" height="600" as="geometry"/>
+                </mxCell>
+                <mxCell id="29" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;" parent="8" vertex="1">
+                    <mxGeometry x="45" y="395" width="10" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;" parent="1" vertex="1">
+                    <mxGeometry x="515" y="240" width="10" height="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="&amp;nbsp;校验 client_id 与 client_secret 匹配&lt;br&gt;&amp;nbsp;校验 client_id 与 redirect_uri 匹配&lt;br&gt;&amp;nbsp;" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" parent="1" edge="1">
+                    <mxGeometry x="0.3331" relative="1" as="geometry">
+                        <mxPoint x="525" y="350" as="sourcePoint"/>
+                        <Array as="points">
+                            <mxPoint x="525" y="300"/>
+                            <mxPoint x="555" y="300"/>
+                            <mxPoint x="555" y="370"/>
+                        </Array>
+                        <mxPoint x="525" y="370" as="targetPoint"/>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="27" value="返回 access_token" style="html=1;verticalAlign=bottom;endArrow=block;dashed=1;" parent="1" edge="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="515" y="430" as="sourcePoint"/>
+                        <mxPoint x="335" y="430" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="460" y="430"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="30" value="请求资源&lt;br&gt;（携带 access_token）" style="html=1;verticalAlign=bottom;endArrow=block;" parent="1" edge="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="335" y="520" as="sourcePoint"/>
+                        <mxPoint x="784.9999999999998" y="520" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="390" y="520"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="31" value="&amp;nbsp;校验 access_token" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;spacingLeft=2;endArrow=block;rounded=0;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="797" y="540" as="sourcePoint"/>
+                        <Array as="points">
+                            <mxPoint x="827" y="540"/>
+                        </Array>
+                        <mxPoint x="797" y="560" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="32" value="返回资源" style="html=1;verticalAlign=bottom;endArrow=block;dashed=1;" parent="1" edge="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="784.9999999999998" y="572" as="sourcePoint"/>
+                        <mxPoint x="335" y="572" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="715" y="572"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="35" value="发送鉴权请求&lt;br&gt;(client_id, client_secret, scope)" style="html=1;verticalAlign=bottom;endArrow=block;" parent="1" edge="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="335" y="270" as="sourcePoint"/>
+                        <mxPoint x="515" y="270" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="390" y="270"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

@@ -1,0 +1,25 @@
+.loader-rect-filp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 注意消失点默认在中心，因此往中间对齐 */
+  perspective: 500px;
+}
+
+.loader-rect-filp .loader-rect-filp__item {
+  width: 40px;
+  height: 40px;
+  background-color: #f64747;
+  animation: loader-rect-filp__item-flip-flip 1.5s 0s infinite normal none;
+}
+
+
+@keyframes loader-rect-filp__item-flip-flip {
+  50% {
+    transform: rotateY(180deg);
+  }
+
+  to {
+    transform: rotateY(180deg) rotateX(180deg);
+  }
+}

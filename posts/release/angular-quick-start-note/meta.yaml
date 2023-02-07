@@ -1,0 +1,5 @@
+date: "2020-11-20"
+title: "Angular 入门笔记"
+tags: ['fe', 'ng']
+abstract: 'Angular 入门笔记。'
+requirements: ['请先阅读 Angular 官方文档', '请先阅读 RxJS 文档']

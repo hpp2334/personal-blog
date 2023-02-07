@@ -1,0 +1,39 @@
+.loaderball {
+  display: flex;
+  align-items: center;
+}
+
+.loaderball .loaderball__item {
+  --anim-ease: cubic-bezier(.6,.05,.15,.95);
+  width: 20px;
+  height: 20px;
+  margin-right: 20px;
+  border-radius: 100%;
+  background-color: #f64747;
+  animation: loaderball__item__bounce 0.5s var(--anim-ease) 0s infinite alternate none;
+  /* animation: name duration timing-function delay iteration-count direction fill-mode; */
+}
+
+.loaderball .loaderball__item:last-child {
+  margin-right: 0px;
+}
+
+.loaderball .loaderball__item:nth-child(2) {
+  animation-delay: 0.25s;
+  animation-fill-mode: backwards;
+}
+
+.loaderball .loaderball__item:nth-child(3) {
+  animation-delay: 0.5s;
+  animation-fill-mode: backwards;
+}
+
+@keyframes loaderball__item__bounce {
+  from {
+    transform: translate3D(0, 10px, 0) scale(1.1, 0.9);
+  }
+
+  to {
+    transform: translate3D(0, -20px, 0) scale(0.9, 1.1);
+  }
+}

@@ -1,0 +1,72 @@
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  --toggle-width: 80px;
+  --toggle-height: 40px;
+  --bg-unchecked: #ddd;
+  --bg-checked: #333;
+}
+
+.toggle-switch .toggle-switch__item {
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.toggle-switch input.toggle-switch__item + label {
+  position: relative;
+  display: inline-block;
+  width: var(--toggle-width);
+  height: var(--toggle-height);
+  background-color: var(--bg-unchecked);
+  border-radius: calc(var(--toggle-height) / 2);
+  outline: 2px solid;
+  box-shadow: 2px 2px 2px #ddd;
+  cursor: pointer;
+  overflow: hidden;
+
+  transition: transform 0.1s;
+}
+
+.toggle-switch input.toggle-switch__item + label:active {
+  transform: scale(1.05);
+}
+
+.toggle-switch .toggle-switch__item + label::before {
+  position: absolute;
+  content: "";
+  width: calc(var(--toggle-height) * 0.75);
+  height: calc(var(--toggle-height) * 0.75);
+  left: calc(var(--toggle-height) / 2);
+  top: calc(var(--toggle-height) / 2);
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  background-color: var(--bg-checked);
+
+  box-shadow:
+    calc(var(--toggle-width) - var(--toggle-height))
+    0px
+    var(--bg-unchecked);
+
+  border-radius: 50%;
+}
+
+.toggle-switch .toggle-switch__item + label::after {
+  position: absolute;
+  content: "";
+  width: calc(var(--toggle-height) / 2);
+  height: calc(var(--toggle-height) / 2);
+  left: 0;
+  top: calc(var(--toggle-height) / 2);
+  background-color: var(--bg-checked);
+  border-radius: 50%;
+  transform: translate(-100%, -50%);
+
+  transition: transform 0.2s;
+}
+
+.toggle-switch .toggle-switch__item:checked + label::after {
+  transform: translate(0, -50%) scale(10);
+}
