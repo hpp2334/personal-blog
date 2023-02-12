@@ -1,7 +1,7 @@
 import path from "path";
 import fs from 'fs/promises'
 import { existsSync } from "fs";
-import { PostMeta } from "@/core/post.core";
+import { Post, PostMeta } from "@/core/post.core";
 
 
 const POSTS_DRAFT_DIR = path.resolve(process.cwd(), './posts/draft');
@@ -20,8 +20,9 @@ async function parseMeta(ctx: BuildContext, postDir: string, metaYaml: Buffer): 
         ret.path = path.relative(ctx.postsDir, postDir);
         ret.date = (new Date(ret.date)).getTime();
         ret.draft = ctx.draft;
-        ret.abstract = ret.abstract ?? '';
-        ret.references = ret.references ?? [];
+        ret.abstract ??= '';
+        ret.requirements ??= [];
+        ret.references ??= [];
     }
     return ret;
 }
@@ -52,12 +53,30 @@ async function getMetas(postsDir: string, isDraft: boolean): Promise<PostMeta[]>
     return ret;
 }
 
-export async function getPosts() {
+export async function getPosts(): Promise<PostMeta[]> {
     const metas = [
         ...(await getMetas(POSTS_DRAFT_DIR, true)),
         ...(await getMetas(POSTS_RELEASE_DIR, false)),
     ];
     metas.sort((a, b) => b.date - a.date);
     return metas;
+}
+
+export async function getPost(slug: string[], draft: boolean): Promise<Post | null> {
+    const postsDir = draft ? POSTS_DRAFT_DIR : POSTS_RELEASE_DIR;
+    const postDir = path.join(postsDir, ...slug);
+    const ctx: BuildContext = {
+        draft,
+        postsDir,
+    }
+    const meta = await getMeta(ctx, postDir);
+
+    if (!meta) {
+        return null;
+    }
+
+    return {
+        meta,
+    }
 }
 
