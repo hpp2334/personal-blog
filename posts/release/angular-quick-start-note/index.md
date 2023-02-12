@@ -1,20 +1,6 @@
----
-date: "2020-11-20"
-title: "Angular 入门笔记"
-tags: ['fe', 'ng']
-abstract: 'Angular 入门笔记。'
-requirements: ['请先阅读 Angular 官方文档', '请先阅读 RxJS 文档']
----
-
 ## 版本
 
 Angular: 11.2.7  
-
-## 参考
-
-[Angular - NgModule 简介](https://angular.cn/guide/architecture-modules)  
-[Angular - 术语表](https://angular.cn/guide/glossary)  
-[Angular - 响应式表单](https://angular.cn/guide/reactive-forms#displaying-a-form-control-value)  
 
 ## 基础概念
 

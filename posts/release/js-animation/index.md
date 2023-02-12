@@ -1,16 +1,3 @@
----
-date: "2022-02-28"
-title: "前端动画 - JavaScript 动画"
-tags: ["fe"]
-abstract: "本文阐述了 JavaScript 动画实现的要点，并提供了一个 Demo 级别的 JavaScript 声明式动画库。"
-requirements: []
-references:
-  [
-    ["anime.js", "https://github.com/juliangarnier/anime/"],
-    ["animation - CSS", "https://developer.mozilla.org/zh-CN/docs/Web/CSS/animation"],
-  ]
----
-
 import { JsAnimiationLibraryDemo } from "./js-animation-library-demo"
 
 ## 前言
