@@ -1,0 +1,51 @@
+.post {
+  $primary-color-light: rgb(245, 250, 255);
+  $primary-color: rgb(31, 123, 228);
+  $primary-color-dark: rgb(0, 52, 110);
+  $gray-color-light: rgb(244, 244, 244);
+  $text-color: rgb(45, 45, 45);
+
+  .heading {
+    font-weight: 400;
+    margin: 5px 0 0 0;
+    color: rgb(0, 52, 110);
+    letter-spacing: 0.5px;
+
+    &.h2 {
+      margin-top: 40px;
+    }
+
+    &.h3 {
+      margin-top: 20px;
+    }
+  }
+
+  .paragraph {
+    color: $text-color;
+    font-size: 16px;
+    line-height: 150%;
+  }
+
+  .list {
+    color: $text-color;
+    font-size: 16px;
+
+    & > li {
+      line-height: 150%;
+    }
+  }
+
+  .codespan {
+    font-size: 12px;
+    background-color: $gray-color-light;
+    color: $text-color;
+    padding: 2px 4px;
+    border-radius: 2px;
+  }
+
+  .strong {
+    color: $text-color;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}

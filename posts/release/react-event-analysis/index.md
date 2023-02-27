@@ -1,53 +1,30 @@
----
-date: "2021-03-30"
-title: "React 事件机制简析"
-tags: ['fe', 'react', 'source']
-abstract: '本文简单分析了 React 事件机制原理。'
-requirements: [
-  '使用过 React'
-]
-series: 'react-analysis'
----
-
-## 参考
-
-[DOM事件机制](https://juejin.cn/post/6844903731079675917)  
-[React 源码](https://github.com/facebook/react)  
-[React 文档 - 合成事件](https://zh-hans.reactjs.org/docs/events.html)  
-[React中的优先级](https://www.neroht.com/article-detail/21)
-[深入React合成事件机制原理](https://www.neroht.com/article-detail/34)  
-
-## 环境
-
-- React: 17.0.2
-
 ## 前言
 
-React 使用合成事件机制，React 17 中将 React 事件对应的原生事件绑定在 `root` 元素上（而非 `document`），这样做的好处有：  
+React 使用合成事件机制，React 17 中将 React 事件对应的原生事件绑定在 `root` 元素上（而非 `document`），这样做的好处有：
 
-- 抹平浏览器之间的差异  
-- 允许带优先级调度任务  
-- 相对于绑定在 `document` 上，绑定在 `root` 上可以使得多个 React 版本同时运行时在事件处理上不冲突  
+- 抹平浏览器之间的差异
+- 允许带优先级调度任务
+- 相对于绑定在 `document` 上，绑定在 `root` 上可以使得多个 React 版本同时运行时在事件处理上不冲突
 
-下图是对 React 事件机制的总结，读者如有疑惑，可在阅读全篇后再看此图。  
+下图是对 React 事件机制的总结，读者如有疑惑，可在阅读全篇后再看此图。
 
-![React 事件机制](./react-event.png)
+![React 事件机制](/react-event-analysis/react-event.png)
 
-接下来，将通过源码分析 React 事件机制。需要注意，本文对源代码有简化甚至是修改，需要精确的源代码请自行查看官方 repo。  
+接下来，将通过源码分析 React 事件机制。需要注意，本文对源代码有简化甚至是修改，需要精确的源代码请自行查看官方 repo。
 
 ## DOM 事件机制的一些注意点
 
-1. 事件传播按顺序为：捕获阶段（`capture`），目标阶段，冒泡阶段（`bubble`）；  
-2. `ev.target` 为事件发出者，`ev.currentTarget` 为事件绑定者（在事件传播中会变化）；  
-3. `ev.stopPropagation()` 可阻止事件传播，`ev.preventDefault()` 可阻止一些默认行为；  
+1. 事件传播按顺序为：捕获阶段（`capture`），目标阶段，冒泡阶段（`bubble`）；
+2. `ev.target` 为事件发出者，`ev.currentTarget` 为事件绑定者（在事件传播中会变化）；
+3. `ev.stopPropagation()` 可阻止事件传播，`ev.preventDefault()` 可阻止一些默认行为；
 
 ## React 事件优先级
 
-按优先级这一维度，React 将事件划分为三类：  
+按优先级这一维度，React 将事件划分为三类：
 
-- 离散事件（DiscreteEvent）：不连续触发，如 `onClick` 等，优先级最低；  
-- 用户阻塞事件（UserBlockEvent）：连续触发，如 `onMouseOver` 等；  
-- 连续事件（ContinuousEvent）：`onCanPlay`, `onError` 等，优先级最高；  
+- 离散事件（DiscreteEvent）：不连续触发，如 `onClick` 等，优先级最低；
+- 用户阻塞事件（UserBlockEvent）：连续触发，如 `onMouseOver` 等；
+- 连续事件（ContinuousEvent）：`onCanPlay`, `onError` 等，优先级最高；
 
 ## React 中将什么 listener 绑定到 root 上？
 
@@ -64,14 +41,20 @@ function listenerWrapper(
   extract(listenerQueue, targetInst);
   // ...
   for (const { event, listeners } of listenerQueue) {
-    if (inCapturePhase) { // 在捕获阶段
+    if (inCapturePhase) {
+      // 在捕获阶段
       for (let i = listeners.length - 1; i >= 0; i--) {
-        if (event.isPropagationStopped) { // 停止广播
+        if (event.isPropagationStopped) {
+          // 停止广播
           return;
         }
-        executeListener(listners[i].listener, listeners[i].currentTarget, /* ... */);
+        executeListener(
+          listners[i].listener,
+          listeners[i].currentTarget /* ... */
+        );
       }
-    } else { // 在冒泡阶段
+    } else {
+      // 在冒泡阶段
       // ... 逻辑与在捕获阶段的基本相同
     }
   }
@@ -80,24 +63,24 @@ function listenerWrapper(
 
 当然，上述代码省略与修改了很多细节，要考虑的还有很多，如：
 
-- 优先级如何表现？  
-- 沿根走如何收集 listener 及相关信息？  
-- 合成事件是怎么封装的？  
+- 优先级如何表现？
+- 沿根走如何收集 listener 及相关信息？
+- 合成事件是怎么封装的？
 - ...
 
 ### listenerWrapper 的创建
 
 `createEventListenerWrapperWithPriority` 用于创建 listenerWrapper，后该 listenerWrapper 会绑定到某 DOM 元素上。在该方法内，会根据事件名决定具体使用的 listenerWrapper。listenerWrapper 有：
 
-- `dispatchDiscreteEvent`：处理离散事件  
-- `dispatchUserBlockingUpdate`：处理用户阻塞事件  
-- `dispatchEvent`：处理连续事件  
+- `dispatchDiscreteEvent`：处理离散事件
+- `dispatchUserBlockingUpdate`：处理用户阻塞事件
+- `dispatchEvent`：处理连续事件
 
 ```js
 export function createEventListenerWrapperWithPriority(
   targetContainer: EventTarget,
   domEventName: DOMEventName,
-  eventSystemFlags: EventSystemFlags,
+  eventSystemFlags: EventSystemFlags
 ): Function {
   const eventPriority = getEventPriorityForPluginSystem(domEventName);
   let listenerWrapper;
@@ -115,9 +98,9 @@ export function createEventListenerWrapperWithPriority(
   }
   return listenerWrapper.bind(
     null,
-    domEventName,   
+    domEventName,
     eventSystemFlags,
-    targetContainer,
+    targetContainer
   );
 }
 ```
@@ -137,15 +120,15 @@ function dispatchEventsForPlugins(/* ... */): void {
 
 ### listener 的收集
 
-listenerWrapper 触发时会在内部执行需要被执行的 listener，因此触发时 listenerWrapper 时需要收集 listener。  
+listenerWrapper 触发时会在内部执行需要被执行的 listener，因此触发时 listenerWrapper 时需要收集 listener。
 
 需要注意，React 事件与原生事件并不一定是一一对应的，如 `onMouseEnter` 事件同时依赖了 `mouseout` 与 `mouseover` 原生事件。另外，React 可能使用使用 polyfill 的方式实现事件，如 `onMouseEnter`, `onMouseLeave`。这便在一定程度上使得 React 为不同的事件设立 plugin 用于处理事件相关事宜，其中便包括了 listener 的收集。除 SimpleEventPlugin 外的插件为 polyfillPlugin。
 
 - SimpleEventPlugin：处理大部分事件
-- SelectEventPlugin：处理 `onSelect`，适用于 `input`, `textarea`, `contentEditable`  
-- EnterLeaveEventPlugin：处理 `onMouseEnter`, `onMouseLeave`, `onPointerEnter`, `onPointerLeave`  
-- ChangeEventPlugin：处理 `onChange`  
-- BeforeInputEventPlugin：处理 `onBeforeInput`, `onCompositionEnd`, `onCompositionStart`, `onCompositionUpdate`  
+- SelectEventPlugin：处理 `onSelect`，适用于 `input`, `textarea`, `contentEditable`
+- EnterLeaveEventPlugin：处理 `onMouseEnter`, `onMouseLeave`, `onPointerEnter`, `onPointerLeave`
+- ChangeEventPlugin：处理 `onChange`
+- BeforeInputEventPlugin：处理 `onBeforeInput`, `onCompositionEnd`, `onCompositionStart`, `onCompositionUpdate`
 
 SimpleEventPlugin 会间接调用 `accumulateSinglePhaseListeners` 以收集 listener。该方法会从 targetFiber 到根收集 listener（通过 `fiber.return` 访问父亲）。
 
@@ -192,7 +175,7 @@ export function accumulateSinglePhaseListeners(
 }
 ```
 
-BeforeInputEventPlugin, ChangeEventPlugin, SelectEventPlugin 只在冒泡阶段处理，通过 `accumulateTwoPhaseListeners` 方法收集 listener，在方法内部需要模拟捕获与冒泡传播阶段。具体的，在沿父边移动过程中，通过 `listeners.unshift` 插入捕获 listener 到头部，通过 `listeners.push` 插入冒泡 listener 到尾部，这样顺序遍历 listeners 数组即是事件传播顺序。 
+BeforeInputEventPlugin, ChangeEventPlugin, SelectEventPlugin 只在冒泡阶段处理，通过 `accumulateTwoPhaseListeners` 方法收集 listener，在方法内部需要模拟捕获与冒泡传播阶段。具体的，在沿父边移动过程中，通过 `listeners.unshift` 插入捕获 listener 到头部，通过 `listeners.push` 插入冒泡 listener 到尾部，这样顺序遍历 listeners 数组即是事件传播顺序。
 
 ```js
 // We should only use this function for:
@@ -204,27 +187,31 @@ BeforeInputEventPlugin, ChangeEventPlugin, SelectEventPlugin 只在冒泡阶段�
 // phase event listeners (via emulation).
 export function accumulateTwoPhaseListeners(
   targetFiber: Fiber | null,
-  reactName: string,
+  reactName: string
 ): Array<DispatchListener> {
-  const captureName = reactName + 'Capture';
+  const captureName = reactName + "Capture";
   const listeners: Array<DispatchListener> = [];
   let instance = targetFiber;
 
   // Accumulate all instances and listeners via the target -> root path.
   while (instance !== null) {
-    const {stateNode, tag} = instance;
+    const { stateNode, tag } = instance;
     // Handle listeners that are on HostComponents (i.e. <div>)
     if (tag === HostComponent && stateNode !== null) {
       const currentTarget = stateNode;
       const captureListener = getListener(instance, captureName);
       if (captureListener != null) {
         // 通过 unshift 插入到头部
-        listeners.unshift(createDispatchListener(instance, captureListener, currentTarget));
+        listeners.unshift(
+          createDispatchListener(instance, captureListener, currentTarget)
+        );
       }
       const bubbleListener = getListener(instance, reactName);
       if (bubbleListener != null) {
         // 通过 push 插入到头部
-        listeners.push(createDispatchListener(instance, bubbleListener, currentTarget));
+        listeners.push(
+          createDispatchListener(instance, bubbleListener, currentTarget)
+        );
       }
     }
     instance = instance.return;
@@ -244,8 +231,8 @@ function createSyntheticEvent(Interface: EventInterfaceType) {
     reactName: string | null,
     reactEventType: string,
     targetInst: Fiber,
-    nativeEvent: {[propName: string]: mixed},
-    nativeEventTarget: null | EventTarget,
+    nativeEvent: { [propName: string]: mixed },
+    nativeEventTarget: null | EventTarget
   ) {
     this._reactName = reactName;
     this._targetInst = targetInst;
@@ -260,36 +247,43 @@ function createSyntheticEvent(Interface: EventInterfaceType) {
       }
       const normalize = Interface[propName];
       // normalize 非 0 时为函数
-      this[propName] = normalize ? normalize(nativeEvent) : nativeEvent[propName];
+      this[propName] = normalize
+        ? normalize(nativeEvent)
+        : nativeEvent[propName];
     }
 
-    const defaultPrevented = nativeEvent.defaultPrevented != null ? nativeEvent.defaultPrevented : nativeEvent.returnValue === false;
-    this.isDefaultPrevented = defaultPrevented ? functionThatReturnsTrue : functionThatReturnsFalse;
+    const defaultPrevented =
+      nativeEvent.defaultPrevented != null
+        ? nativeEvent.defaultPrevented
+        : nativeEvent.returnValue === false;
+    this.isDefaultPrevented = defaultPrevented
+      ? functionThatReturnsTrue
+      : functionThatReturnsFalse;
     this.isPropagationStopped = functionThatReturnsFalse;
     return this;
   }
 
   Object.assign(SyntheticBaseEvent.prototype, {
-    preventDefault: function() {
+    preventDefault: function () {
       this.defaultPrevented = true;
       const event = this.nativeEvent;
       if (!event) return;
 
       if (event.preventDefault) {
         event.preventDefault();
-      } else if (typeof event.returnValue !== 'unknown') {
+      } else if (typeof event.returnValue !== "unknown") {
         event.returnValue = false;
       }
       this.isDefaultPrevented = functionThatReturnsTrue;
     },
 
-    stopPropagation: function() {
+    stopPropagation: function () {
       const event = this.nativeEvent;
       if (!event) return;
 
       if (event.stopPropagation) {
         event.stopPropagation();
-      } else if (typeof event.cancelBubble !== 'unknown') {
+      } else if (typeof event.cancelBubble !== "unknown") {
         // The ChangeEventPlugin registers a "propertychange" event for
         // IE. This event does not support bubbling or cancelling, and
         // any references to cancelBubble throw "Member not found".  A
@@ -332,8 +326,15 @@ dispatchQueue 的类型为 `Array<{ event: SyntheticEvent, listeners: Function[]
 每个 plugin 都维护了自己的 `extractEvents` 逻辑，以 SimpleEventPlugin 为例。该方法根据 DOM 事件类型名选择相应的合成事件构造函数并生成合成事件，同时调用 `accumulateSinglePhaseListeners` 收集 listeners，最后维护 dispatchQueue。
 
 ```js
-function extractEvents(dispatchQueue: DispatchQueue, domEventName: DOMEventName, targetInst: null | Fiber, nativeEvent: AnyNativeEvent,
-  nativeEventTarget: null | EventTarget, eventSystemFlags: EventSystemFlags, targetContainer: EventTarget): void {
+function extractEvents(
+  dispatchQueue: DispatchQueue,
+  domEventName: DOMEventName,
+  targetInst: null | Fiber,
+  nativeEvent: AnyNativeEvent,
+  nativeEventTarget: null | EventTarget,
+  eventSystemFlags: EventSystemFlags,
+  targetContainer: EventTarget
+): void {
   // 将 DOM 事件名转为 React 事件名
   const reactName = topLevelEventsToReactNames.get(domEventName);
   // ...
@@ -342,14 +343,14 @@ function extractEvents(dispatchQueue: DispatchQueue, domEventName: DOMEventName,
   // 根据 DOM 事件类型名选择合成事件构造函数 SyntheticEventCtor
   switch (domEventName) {
     // ...
-    case 'click':
+    case "click":
       // Firefox creates a click event on right mouse clicks. This removes the
       // unwanted click events.
       if (nativeEvent.button === 2) {
         return;
       }
-    /* falls through */
-    // ...
+      /* falls through */
+      // ...
       SyntheticEventCtor = SyntheticMouseEvent;
       break;
     // ...
@@ -362,8 +363,14 @@ function extractEvents(dispatchQueue: DispatchQueue, domEventName: DOMEventName,
   if (listeners.length > 0) {
     // Intentionally create event lazily.
     // 创建合成事件并维护 dispatchQueue
-    const event = new SyntheticEventCtor(reactName, reactEventType, null, nativeEvent, nativeEventTarget);
-    dispatchQueue.push({event, listeners});
+    const event = new SyntheticEventCtor(
+      reactName,
+      reactEventType,
+      null,
+      nativeEvent,
+      nativeEventTarget
+    );
+    dispatchQueue.push({ event, listeners });
   }
 }
 ```
@@ -391,21 +398,25 @@ function extractEvents(/* ... */) {
 ```js
 export function processDispatchQueue(
   dispatchQueue: DispatchQueue,
-  eventSystemFlags: EventSystemFlags,
+  eventSystemFlags: EventSystemFlags
 ): void {
   const inCapturePhase = (eventSystemFlags & IS_CAPTURE_PHASE) !== 0;
   for (let i = 0; i < dispatchQueue.length; i++) {
-    const {event, listeners} = dispatchQueue[i];
+    const { event, listeners } = dispatchQueue[i];
     processDispatchQueueItemsInOrder(event, listeners, inCapturePhase);
   }
   // ...
 }
 
-function processDispatchQueueItemsInOrder(event: ReactSyntheticEvent, dispatchListeners: Array<DispatchListener>, inCapturePhase: boolean): void {
+function processDispatchQueueItemsInOrder(
+  event: ReactSyntheticEvent,
+  dispatchListeners: Array<DispatchListener>,
+  inCapturePhase: boolean
+): void {
   let previousInstance;
   if (inCapturePhase) {
     for (let i = dispatchListeners.length - 1; i >= 0; i--) {
-      const {instance, currentTarget, listener} = dispatchListeners[i];
+      const { instance, currentTarget, listener } = dispatchListeners[i];
       if (instance !== previousInstance && event.isPropagationStopped()) {
         return;
       }
@@ -414,7 +425,7 @@ function processDispatchQueueItemsInOrder(event: ReactSyntheticEvent, dispatchLi
     }
   } else {
     for (let i = 0; i < dispatchListeners.length; i++) {
-      const {instance, currentTarget, listener} = dispatchListeners[i];
+      const { instance, currentTarget, listener } = dispatchListeners[i];
       if (instance !== previousInstance && event.isPropagationStopped()) {
         return;
       }
@@ -425,7 +436,6 @@ function processDispatchQueueItemsInOrder(event: ReactSyntheticEvent, dispatchLi
 }
 ```
 
-
 ## React 中如何将 listener 绑定到 root 上？
 
 ### 在设置 DOM 属性时确保监听
@@ -433,8 +443,13 @@ function processDispatchQueueItemsInOrder(event: ReactSyntheticEvent, dispatchLi
 `setInitialDOMProperties` 在 render 阶段的 complete 期间执行，当 propKey 为事件名时，会调用 `ensureListeningTo` 确保事件被监听。
 
 ```js
-function setInitialDOMProperties(tag: string, domElement: Element, rootContainerElement: Element | Document,
-  nextProps: Object, isCustomComponentTag: boolean): void {
+function setInitialDOMProperties(
+  tag: string,
+  domElement: Element,
+  rootContainerElement: Element | Document,
+  nextProps: Object,
+  isCustomComponentTag: boolean
+): void {
   for (const propKey in nextProps) {
     if (!nextProps.hasOwnProperty(propKey)) {
       continue;
@@ -537,20 +552,20 @@ export function addEventCaptureListenerWithPassiveFlag(target, eventType, listen
 
 ## React 如何处理优先级？
 
-前面提过，有 3 种 listenerWrapper：`dispatchDiscreteEvent`, `dispatchUserBlockingUpdate`, `dispatchEvent`。其中 `dispatchEvent` 会间接调用 `dispatchEventsForPlugins` 以处理 listeners； `dispatchDiscreteEvent` 和 `dispatchUserBlockingUpdate` 会间接 `dispatchEvent`，并加上优先级相关逻辑。  
+前面提过，有 3 种 listenerWrapper：`dispatchDiscreteEvent`, `dispatchUserBlockingUpdate`, `dispatchEvent`。其中 `dispatchEvent` 会间接调用 `dispatchEventsForPlugins` 以处理 listeners； `dispatchDiscreteEvent` 和 `dispatchUserBlockingUpdate` 会间接 `dispatchEvent`，并加上优先级相关逻辑。
 
 ### 默认
 
-默认情况下：  
+默认情况下：
 
 ```js
-let batchedUpdatesImpl = function(fn, bookkeeping) {
+let batchedUpdatesImpl = function (fn, bookkeeping) {
   return fn(bookkeeping);
 };
-let discreteUpdatesImpl = function(fn, a, b, c, d) {
+let discreteUpdatesImpl = function (fn, a, b, c, d) {
   return fn(a, b, c, d);
 };
-let flushDiscreteUpdatesImpl = function() {};
+let flushDiscreteUpdatesImpl = function () {};
 let batchedEventUpdatesImpl = batchedUpdatesImpl;
 
 // ...
@@ -559,7 +574,7 @@ export function setBatchingImplementation(
   _batchedUpdatesImpl,
   _discreteUpdatesImpl,
   _flushDiscreteUpdatesImpl,
-  _batchedEventUpdatesImpl,
+  _batchedEventUpdatesImpl
 ) {
   batchedUpdatesImpl = _batchedUpdatesImpl;
   discreteUpdatesImpl = _discreteUpdatesImpl;
@@ -570,31 +585,40 @@ export function setBatchingImplementation(
 
 `dispatchDiscreteEvent` 会间接调用 `discreteUpdatesImpl(dispatchEvent, ...)`。  
 `dispatchUserBlockingUpdate` 会调用 `runWithPriority(UserBlockingPriority, dispatchEvent.bind(...))`。（`runWithPriority` 来自于 Scheduler 包）  
-`dispatchEvent` 会调用 `batchedEventUpdatesImpl(() => dispatchEventsForPlugins(...))`。  
+`dispatchEvent` 会调用 `batchedEventUpdatesImpl(() => dispatchEventsForPlugins(...))`。
 
 ### ReactDOM 注入
 
-ReactDOM 会注入 `discreteUpdatesImpl`, `batchedEventUpdatesImpl` 的实现，它们来自于 `react-reconciler`。  
+ReactDOM 会注入 `discreteUpdatesImpl`, `batchedEventUpdatesImpl` 的实现，它们来自于 `react-reconciler`。
 
 ```js
 setBatchingImplementation(
   batchedUpdates,
   discreteUpdates,
   flushDiscreteUpdates,
-  batchedEventUpdates,
+  batchedEventUpdates
 );
 ```
 
 `discreteUpdates` 通过 `runWithPriority(UserBlockingSchedulerPriority, ...)` 调用 callback，最后在 `NoContext` 时调用 `flushSyncCallbackQueue`。
 
 ```js
-export function discreteUpdates<A, B, C, D, R>(fn: (A, B, C) => R, a: A, b: B, c: C, d: D): R {
+export function discreteUpdates<A, B, C, D, R>(
+  fn: (A, B, C) => R,
+  a: A,
+  b: B,
+  c: C,
+  d: D
+): R {
   const prevExecutionContext = executionContext;
   executionContext |= DiscreteEventContext;
 
   // ...
   try {
-    return runWithPriority(UserBlockingSchedulerPriority, fn.bind(null, a, b, c, d));
+    return runWithPriority(
+      UserBlockingSchedulerPriority,
+      fn.bind(null, a, b, c, d)
+    );
   } finally {
     executionContext = prevExecutionContext;
     if (executionContext === NoContext) {
@@ -609,7 +633,7 @@ export function discreteUpdates<A, B, C, D, R>(fn: (A, B, C) => R, a: A, b: B, c
 `batchedEventUpdates` 直接调用 callback，最后在 `NoContext` 时调用 `flushSyncCallbackQueue`。
 
 ```js
-export function batchedEventUpdates<A, R>(fn: A => R, a: A): R {
+export function batchedEventUpdates<A, R>(fn: (A) => R, a: A): R {
   const prevExecutionContext = executionContext;
   executionContext |= EventContext;
   try {
