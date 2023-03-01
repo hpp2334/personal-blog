@@ -12,6 +12,18 @@ export const TAGS: Record<string, TagInfo | undefined> = {
       cn: "前端",
     },
   },
+  react: {
+    name: {
+      en: "React",
+      cn: "React",
+    },
+  },
+  source: {
+    name: {
+      en: "Source Analysis",
+      cn: "源码分析",
+    },
+  },
 };
 
 export interface PostMeta {

@@ -2,7 +2,24 @@
 @import "@/widgets/global.module.scss";
 
 .slug {
+  margin-top: 20px;
+
+  &::before {
+    position: absolute;
+    content: "";
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 300px;
+    background-color: lighten($primary-color, 46);
+    z-index: -999;
+  }
+
   .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
     .date {
       color: $text-color-light;
       letter-spacing: 1px;
@@ -16,7 +33,7 @@
 
     .tags {
       display: flex;
-      gap: 4px;
+      gap: 8px;
       font-size: 14px;
 
       .tag {
@@ -43,7 +60,7 @@
         border-radius: 16px;
         padding: 16px 16px;
         flex-grow: 1;
-        background-color: lighten($col, 40);
+        background-color: lighten($col, 45);
 
         .title {
           text-transform: uppercase;
@@ -89,12 +106,12 @@
       }
 
       .requirements {
-        $col: rgb(228, 61, 0);
+        $col: rgb(236, 63, 0);
         @include card($col);
       }
 
       .environments {
-        $col: rgb(229, 0, 126);
+        $col: rgb(0, 118, 236);
         @include card($col);
       }
     }

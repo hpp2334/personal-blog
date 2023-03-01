@@ -11,6 +11,7 @@ import { PostContentWidget } from "@/widgets/post.widget";
 import styles from "./slug.module.scss";
 import { fmtDate } from "@/utils/common";
 import classNames from "classnames";
+import { AppBar } from "@/widgets/appbar";
 
 interface UrlQuery {
   slug: string[];
@@ -136,6 +137,7 @@ export default function PostDetail({ post }: Props) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <AppBar />
       <PostProvider rawStr={post.rawStr}>
         <main className={styles.slug}>
           <PostHeader meta={post.meta} />
