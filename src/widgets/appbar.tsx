@@ -7,18 +7,22 @@ const config = [
   {
     label: "Posts",
     test: (p: string) => p === "/" || p.startsWith("/blog"),
+    to: "/",
   },
   {
     label: "Projects",
     test: (p: string) => p.startsWith("/projects"),
+    to: "/projects",
   },
   {
     label: "Materials",
     test: (p: string) => p.startsWith("/materials"),
+    to: "/materials",
   },
   {
     label: "About",
     test: (p: string) => p.startsWith("/about"),
+    to: "/materials",
   },
 ];
 
@@ -31,9 +35,13 @@ export function AppBar() {
       <div className={styles.navs}>
         {config.map((conf, idx) => {
           const active = conf.test(router.pathname);
+          const handleClick = () => {
+            router.push(conf.to);
+          };
           return (
             <div
               key={idx}
+              onClick={handleClick}
               className={classNames({
                 [styles.nav]: true,
                 [styles.active]: active,

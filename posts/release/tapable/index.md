@@ -1,18 +1,3 @@
----
-date: "2021-01-01"
-title: "Tapable 原理简析"
-tags: ['fe', 'source']
-abstract: '本文是对 Tapable 源码的简单分析。'
-requirements: [
-  '熟悉发布订阅模式'
-]
-hidden_on_home: false
----
-
-## 环境
-
-- tapable: 2.2.0
-
 ## 前言
 
 tapable 是 webpack 支持插件所设计的库，同时 webpack 本身也构建在其之上。tapable 本质上使用 **发布订阅模式** 实现，此模式在前端中应用甚广，熟悉此模式的读者应该已经知道如何实现一个简单的 tapable。因此，本文不打算造轮子，而是分析 tapable 源码，同时尝试分析其中的值得学习的地方，并尝试分析 tapable 自身的优劣势。
@@ -32,15 +17,15 @@ tapable 提供的 Hook 如下：
 
 ```js
 const {
-	SyncHook,
-	SyncBailHook,
-	SyncWaterfallHook,
-	SyncLoopHook,
-	AsyncParallelHook,
-	AsyncParallelBailHook,
-	AsyncSeriesHook,
-	AsyncSeriesBailHook,
-	AsyncSeriesWaterfallHook
+  SyncHook,
+  SyncBailHook,
+  SyncWaterfallHook,
+  SyncLoopHook,
+  AsyncParallelHook,
+  AsyncParallelBailHook,
+  AsyncSeriesHook,
+  AsyncSeriesBailHook,
+  AsyncSeriesWaterfallHook,
 } = require("tapable");
 ```
 
@@ -59,7 +44,6 @@ const {
 - AsyncSeries：异步串行，支持 `tap`, `tapAsync`, `tapPromise`。
 - AsyncParallel：异步并行，支持 `tap`, `tapAsync`, `tapPromise`。
 
-
 ## 源码的简单分析
 
 ### 结构
@@ -70,11 +54,11 @@ const {
 - HookCodeFactory： Hook call 系列方法工厂抽象类
 - Hook 与 HookCodeFactory 类：
   - SyncHook
-	- SyncBailHook
-	- ...
+  - SyncBailHook
+  - ...
 - helper：
   - HookMap
-	- MultiHook
+  - MultiHook
 
 笔者对其分析只涉及前三者（即不分析 helper），同时会省略大量的细节处理，详细实现细节见 [官方 repo](https://github.com/webpack/tapable)。
 
@@ -86,7 +70,7 @@ tap 系列方法为 `tap`, `tapAsync`, `tapPromise`，下称 `tap*`。`tap*` 充
 
 call 系列方法为 `call`, `callAsync`, `promise`，下称 `call*`。在通常的实现下，可以通过在 `call*` 中遍历 taps 并调用来实现。在 tapable 的实现中，其通过生成代码后 `new Function` 创建函数实现。（原因见 [此 issue](https://github.com/webpack/tapable/issues/114)，笔者认为这相当惊艳！）下图表述了 `call*` 逻辑实现。
 
-![call*](../assets/tapable/call.png)
+![call*](/tapable/call.png)
 
 图中，`*Hook` 表示 Hook 类（`SyncHook`, `SyncBailHook` 等），`*HookCodeFactory` 表示 HookCodeFactory 类。
 
@@ -120,16 +104,16 @@ call 系列方法为 `call`, `callAsync`, `promise`，下称 `call*`。在通常
 
 ```js
 fn = new Function(
-	this.args(),
-	'"use strict";\n' +
-		this.header() +
-		this.contentWithInterceptors({
-			onError: err => `throw ${err};\n`,
-			onResult: result => `return ${result};\n`,
-			resultReturns: true,
-			onDone: () => "",
-			rethrowIfPossible: true
-		})
+  this.args(),
+  '"use strict";\n' +
+    this.header() +
+    this.contentWithInterceptors({
+      onError: (err) => `throw ${err};\n`,
+      onResult: (result) => `return ${result};\n`,
+      resultReturns: true,
+      onDone: () => "",
+      rethrowIfPossible: true,
+    })
 );
 ```
 
@@ -138,30 +122,29 @@ fn = new Function(
 ```js
 let errorHelperUsed = false;
 const content = this.contentWithInterceptors({
-	onError: err => {
-		errorHelperUsed = true;
-		return `_error(${err});\n`;
-	},
-	onResult: result => `_resolve(${result});\n`,
-	onDone: () => "_resolve();\n"
+  onError: (err) => {
+    errorHelperUsed = true;
+    return `_error(${err});\n`;
+  },
+  onResult: (result) => `_resolve(${result});\n`,
+  onDone: () => "_resolve();\n",
 });
 let code = "";
 code += '"use strict";\n';
 code += this.header();
 code += "return new Promise((function(_resolve, _reject) {\n";
 if (errorHelperUsed) {
-	code += "var _sync = true;\n";
-	code += "function _error(_err) {\n";
-	code += "if(_sync)\n";
-	code +=
-		"_resolve(Promise.resolve().then((function() { throw _err; })));\n";
-	code += "else\n";
-	code += "_reject(_err);\n";
-	code += "};\n";
+  code += "var _sync = true;\n";
+  code += "function _error(_err) {\n";
+  code += "if(_sync)\n";
+  code += "_resolve(Promise.resolve().then((function() { throw _err; })));\n";
+  code += "else\n";
+  code += "_reject(_err);\n";
+  code += "};\n";
 }
 code += content;
 if (errorHelperUsed) {
-	code += "_sync = false;\n";
+  code += "_sync = false;\n";
 }
 code += "}));\n";
 fn = new Function(this.args(), code);
@@ -315,22 +298,21 @@ content({ onError, onResult, onDone }) {
 官方目前通过 `delegate` 实现缓存，此处直接贴 `call` 的代码。
 
 ```js
-const CALL_DELEGATE = function(...args) {
-	// _createCall 会生成代码并生成函数
-	this.call = this._createCall("sync");
-	return this.call(...args);
+const CALL_DELEGATE = function (...args) {
+  // _createCall 会生成代码并生成函数
+  this.call = this._createCall("sync");
+  return this.call(...args);
 };
 class Hook {
-	constructor(args = [], name = undefined) {
-		// ...
-		this._call = CALL_DELEGATE;
-		this.call = CALL_DELEGATE;
-		// ...
-	}
+  constructor(args = [], name = undefined) {
+    // ...
+    this._call = CALL_DELEGATE;
+    this.call = CALL_DELEGATE;
+    // ...
+  }
 }
 ```
 
 ### 拦截器 (interceptors) 【WIP】
 
 WIP
-

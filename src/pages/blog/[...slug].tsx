@@ -95,34 +95,40 @@ function PostHeader({ meta }: { meta: PostMeta }) {
         ))}
       </div>
       <div className={styles.cards}>
-        <div className={classNames(styles.references)}>
-          <div className={styles.title}>references</div>
-          {meta.references.map(([t, href], idx) => (
-            <a
-              key={idx}
-              href={href}
-              target="_blank"
-              className={styles.reference}
-            >
-              <div className={styles.text}>{t}</div>
-              <div className={styles.link}>{href}</div>
-            </a>
-          ))}
-        </div>
-        <div className={classNames(styles.requirements)}>
-          <div className={styles.title}>requirements</div>
-          {meta.requirements.map((t, idx) => (
-            <div key={idx}>{t}</div>
-          ))}
-        </div>
-        <div className={classNames(styles.environments)}>
-          <div className={styles.title}>environments</div>
-          {meta.environment.map(([e, v], idx) => (
-            <div>
-              {e}: {v}
-            </div>
-          ))}
-        </div>
+        {meta.references.length > 0 && (
+          <div className={classNames(styles.references)}>
+            <div className={styles.title}>references</div>
+            {meta.references.map(([t, href], idx) => (
+              <a
+                key={idx}
+                href={href}
+                target="_blank"
+                className={styles.reference}
+              >
+                <div className={styles.text}>{t}</div>
+                <div className={styles.link}>{href}</div>
+              </a>
+            ))}
+          </div>
+        )}
+        {meta.requirements.length > 0 && (
+          <div className={classNames(styles.requirements)}>
+            <div className={styles.title}>requirements</div>
+            {meta.requirements.map((t, idx) => (
+              <div key={idx}>{t}</div>
+            ))}
+          </div>
+        )}
+        {meta.environment.length > 0 && (
+          <div className={classNames(styles.environments)}>
+            <div className={styles.title}>environments</div>
+            {meta.environment.map(([e, v], idx) => (
+              <div>
+                {e}: {v}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,14 +1,3 @@
----
-slug: "/blog/ts-util-type"
-date: "2020-11-22"
-title: "TypeScript Utility Type"
-tags: ['fe', 'typescript']
-abstract: '本文为学习笔记向文，希望通过手写一些 utility types 来加深对 TypeScript 类型的理解'
-requirements: [
-  '使用过 TypeScript 内置的 utility types'
-]
----
-
 > Author: hpp2334  
 > Thanks: Alex
 
@@ -76,7 +65,7 @@ type Tail<T extends any[]> = T extends [any, ...infer A] ? A : [];
 某些情况下，infer 会得到 union/intersection 以符合 extends 的要求:
 
 ```ts
-type ReturnT<T> = T extends ((...args: any[]) => infer R) ? R : never;
+type ReturnT<T> = T extends (...args: any[]) => infer R ? R : never;
 type t = ReturnT<(() => string) | (() => number)>;
 // type t = string | number
 ```
@@ -84,7 +73,11 @@ type t = ReturnT<(() => string) | (() => number)>;
 上述情况下，当 `ReturnT` 中的 `R` 被推导为 `string | number` 时走 true 分支 。
 
 ```ts
-type Params<T extends any> = (T extends any ? T : never) extends ((a: infer R) => void) ? R : never;
+type Params<T extends any> = (T extends any ? T : never) extends (
+  a: infer R
+) => void
+  ? R
+  : never;
 type t1 = Params<((a: { a: number }) => any) | ((a: { b: string }) => any)>;
 // type t1 = {
 //   a: number;
@@ -94,7 +87,6 @@ type t1 = Params<((a: { a: number }) => any) | ((a: { b: string }) => any)>;
 ```
 
 上述情况下也是如此。注意其中的 `(T extends any ? T : never)`，是为了防止后续操作因 union 在 conditional types 下出现分配率 (distributive) 而编写的。
-
 
 #### overload 下的 infer
 
@@ -129,20 +121,27 @@ type t2 = never | never;
 class Rectangle {
   width!: number;
   height!: number;
-  constructor(width: number, height: number) {
+  constructor(width: number, height: number) {}
+  size() {
+    return this.width * this.height;
   }
-  size() { return this.width * this.height; }
 }
 type Extends<T, U> = T extends U ? true : false;
 type TypeRectangle = typeof Rectangle;
 
-type t1 = Extends<TypeRectangle, new (width: number, height: number) => Rectangle>; // true
-type t2 = Extends<TypeRectangle, {
-  new (width: number, height: number): Rectangle;
-  prototype: {
-    size(): number;
+type t1 = Extends<
+  TypeRectangle,
+  new (width: number, height: number) => Rectangle
+>; // true
+type t2 = Extends<
+  TypeRectangle,
+  {
+    new (width: number, height: number): Rectangle;
+    prototype: {
+      size(): number;
+    };
   }
-}>; // true
+>; // true
 ```
 
 ### union 具有分配率的常见情况
@@ -154,27 +153,25 @@ type t2 = Extends<TypeRectangle, {
 ```ts
 // Distributive Conditional Types
 type T<A> = A extends number ? [A] : never;
-type t1 = T<0 | 1 | 'a' | 3>;  // type t1 = [0] | [1] | [3]
-
+type t1 = T<0 | 1 | "a" | 3>; // type t1 = [0] | [1] | [3]
 
 // 作为 Object 的 index
 type t2 = {
-  a: '1',
-  b: '2',
-  c: '3',
-}['a' | 'c'];   // type t2 = "1" | "3"
-
+  a: "1";
+  b: "2";
+  c: "3";
+}["a" | "c"]; // type t2 = "1" | "3"
 
 // 作为 Tuple 的 index
-type t3 = [string, number, boolean][0 | 2];  // type t3 = string | boolean
+type t3 = [string, number, boolean][0 | 2]; // type t3 = string | boolean
 ```
 
 ## 约定
 
 - 每一类 utility types 被一个 namespace 包裹，如 Logic 分类下的被 `namespace NspLogic` 包裹。
 - 有以下用于类型检查的函数
-    - `checks(...args: true[])`
-    - `check<T, U = true>()`: 要求 `T` 和 `U` 类型相同时
+  - `checks(...args: true[])`
+  - `check<T, U = true>()`: 要求 `T` 和 `U` 类型相同时
 - 有类型 `List`，定义为 `type List<T = any> = ReadonlyArray<T>`
 
 ## Utility Types
@@ -224,7 +221,11 @@ Equal 的一个可行的实现为:
 
 ```ts
 namespace NspAny {
-  export type Equal<T1, T2> = (<A>() => (A extends T1 ? 1 : 0)) extends (<A>() => (A extends T2 ? 1 : 0)) ? true : false;
+  export type Equal<T1, T2> = (<A>() => A extends T1 ? 1 : 0) extends <
+    A
+  >() => A extends T2 ? 1 : 0
+    ? true
+    : false;
 
   checks(
     check<Equal<1, 0>, false>(),
@@ -242,8 +243,8 @@ namespace NspAny {
 [https://github.com/Microsoft/TypeScript/issues/27024](https://github.com/Microsoft/TypeScript/issues/27024) 中 fatcerberus 关于此实现的原理描述为:
 
 > AFAIK it relies on conditional types being deferred when T is not known. Assignability of deferred conditional types relies on an internal isTypeIdenticalTo check, which is only true for two conditional types if:
->       Both conditional types have the same constraint
->       The true and false branches of both conditions are the same type
+> Both conditional types have the same constraint
+> The true and false branches of both conditions are the same type
 
 当 conditional types 无法推断类型时，其推断行为会被延迟 (deferred)。两个被延迟推断的 conditional type 当条件部分相同且 true 与 false 分支类型分别相同时，其中一个可以赋值给另一个。因此，可以构造 deferred conditional types，通过控制约束部分根据 T 类型而不同，true/false 分支类型相同，将两个 conditional types 做一次 extends，来实现 Equal。
 
@@ -266,12 +267,10 @@ class 可以 extends `new (...args: any[]) => any`，利用此特性，在合理
 
 ```ts
 namespace NspClass {
-  export type ConstructorParameters<
-    T extends new (...args: any[]) => any
-  > = T extends new (...args: infer R) => any ? R : never;
-  export type InstanceType<
-    T extends new (...args: any[]) => any
-  > = T extends new (...args: any[]) => infer R ? R : never;
+  export type ConstructorParameters<T extends new (...args: any[]) => any> =
+    T extends new (...args: infer R) => any ? R : never;
+  export type InstanceType<T extends new (...args: any[]) => any> =
+    T extends new (...args: any[]) => infer R ? R : never;
 
   class A {
     constructor(a: number, b: string) {}
@@ -312,13 +311,21 @@ namespace NspUnion {
 ```ts
 namespace NspUnion {
   // 将 union T 转为 union (a: T) => void，对参数 infer 即得到 intersection
-  type IntersectionOf<T> = (T extends any ? (a: T) => void : never) extends (a: infer R) => void ? R : never;
+  type IntersectionOf<T> = (T extends any ? (a: T) => void : never) extends (
+    a: infer R
+  ) => void
+    ? R
+    : never;
   // 参数 infer 即得到最后一个参数的类型
-  type Last<T> = IntersectionOf<T extends any ? (a: T) => void : never> extends (a: infer R) => void ? R : never;
+  type Last<T> = IntersectionOf<
+    T extends any ? (a: T) => void : never
+  > extends (a: infer R) => void
+    ? R
+    : never;
   // 递归构建 list，每次查找最后一个类型并 prepend 进 list
   type _ListOf<T, RES extends List = [], LastT = Last<T>> = {
-    0: _ListOf<Exclude<T, LastT>, NspList.Prepend<RES, LastT>>,
-    1: RES,
+    0: _ListOf<Exclude<T, LastT>, NspList.Prepend<RES, LastT>>;
+    1: RES;
   }[[T] extends [never] ? 1 : 0];
   type ListOf<T> = _ListOf<T>;
 
@@ -356,7 +363,7 @@ type MAP = {
   [k: string]: Iterator;
 };
 
-type Iterator = [string, number, string, string]
+type Iterator = [string, number, string, string];
 /*
 [
   current(string), // 当前数值 (string 类型)
@@ -375,7 +382,7 @@ namespace NspIterator {
   // 省略 Iterator 的实现部分
   export type Prev<I extends Iterator> = MAP[I[2]];
   export type Next<I extends Iterator> = MAP[I[3]];
-  export type Pos<I extends Iterator> = I[1];       // 取位置
+  export type Pos<I extends Iterator> = I[1]; // 取位置
   // 构造 iterator
   export type IteratorOf<n extends number | string> = n extends keyof MAP
     ? MAP[n]
@@ -424,7 +431,7 @@ namespace NspObject {
 `Filter<T, K>` 为返回 T 中值为 K 中的项 (key-value 对) 构成的 object，如:
 
 ```ts
-type t1 = Filter<{ a: string; b: number; c: boolean; d: number; }, number>;
+type t1 = Filter<{ a: string; b: number; c: boolean; d: number }, number>;
 // type t1 = {
 //   b: number;
 //   d: number;
@@ -456,8 +463,18 @@ namespace NspObject {
 
 ```ts
 namespace NspFunction {
-  export type OmitThisParameter<T> = T extends (this: any, ...args: infer U) => infer V ? (...args: U) => V : T;
-  export type ThisParameterType<T> = T extends (this: infer R, ...args: any) => any ? R : unknown;
+  export type OmitThisParameter<T> = T extends (
+    this: any,
+    ...args: infer U
+  ) => infer V
+    ? (...args: U) => V
+    : T;
+  export type ThisParameterType<T> = T extends (
+    this: infer R,
+    ...args: any
+  ) => any
+    ? R
+    : unknown;
 }
 ```
 
@@ -471,9 +488,18 @@ namespace NspFunction {
 
 ```ts
 namespace NspFunction {
-  export type Parameters<T extends (...args: any[]) => any> = T extends (...args: infer R) => any ? R : never;
-  export type Length<T extends (...args: any[]) => any> = Parameters<T>["length"];
-  export type ReturnType<T extends (...args: any[]) => any> = T extends (...args: any[]) => infer R ? R : never;
+  export type Parameters<T extends (...args: any[]) => any> = T extends (
+    ...args: infer R
+  ) => any
+    ? R
+    : never;
+  export type Length<T extends (...args: any[]) => any> =
+    Parameters<T>["length"];
+  export type ReturnType<T extends (...args: any[]) => any> = T extends (
+    ...args: any[]
+  ) => infer R
+    ? R
+    : never;
 }
 ```
 
@@ -484,9 +510,9 @@ namespace NspFunction {
 考虑一种特殊情况:将一个 N 元函数转化为多个一元函数 (其实这是 curry 原本的定义，只是实际应用中希望其可转换为多个接受不定参数的函数)。记传入参数类型为 Fn (此处假设 Fn 的参数列表非空)，则应返回 `(a: Parameters<Fn>[0]) => R`，这里的 R 进行分类讨论:
 
 - 若 Fn 的参数列表长度为 1 (`Parameters<Fn>['Length'] extends 1`)
-    - 则为 Fn 的返回值类型
+  - 则为 Fn 的返回值类型
 - 否则
-    - 返回 `Curry<(...args: B) => ReturnType<Fn>>`，其中 B 为 Fn 的参数列表中除去第一个剩下的，即 `Tail<Parametes<Fn>>`
+  - 返回 `Curry<(...args: B) => ReturnType<Fn>>`，其中 B 为 Fn 的参数列表中除去第一个剩下的，即 `Tail<Parametes<Fn>>`
 
 ```ts
 namespace NspFunction {
@@ -494,14 +520,16 @@ namespace NspFunction {
     A extends any[] = Parameters<Fn>,
     B extends any[] = NspList.Tail<A>,
     R = ReturnType<Fn>
-  >(a: Parameters<Fn>[0]) => Length<Fn> extends 1
-    ? R
-    : Curry_OneParameter<(...args: B) => R>;
+  >(
+    a: Parameters<Fn>[0]
+  ) => Length<Fn> extends 1 ? R : Curry_OneParameter<(...args: B) => R>;
 
   declare const f1: Curry_OneParameter<(x: number) => void>;
   f1(1);
-  declare const f2: Curry_OneParameter<(x: number, y: string, z: boolean) => boolean>;
-  const f2_r1 = f2(0)('str')(false);
+  declare const f2: Curry_OneParameter<
+    (x: number, y: string, z: boolean) => boolean
+  >;
+  const f2_r1 = f2(0)("str")(false);
   // const f2_r1: boolean
   const f2_r2 = f2(0)(1)(true);
   // Error: Argument of type 'number' is not assignable to parameter of type 'string'.ts(2345)
@@ -570,9 +598,9 @@ namespace NspFunction {
     A extends List,
     B extends List = OmitFirstNElements<Parameters<Fn>, A>,
     R = ReturnType<Fn>
-  >(...args: NspAny.Cast<A, Optionalize<Parameters<Fn>>>) => B["length"] extends 0
-    ? R
-    : Curry<(...args: B) => R>;
+  >(
+    ...args: NspAny.Cast<A, Optionalize<Parameters<Fn>>>
+  ) => B["length"] extends 0 ? R : Curry<(...args: B) => R>;
 
   declare const fCurry: Curry<(a: number, b: string, c: boolean) => symbol>;
   fCurry(1)("2", false);
@@ -598,11 +626,7 @@ declare function checks(...arr: true[]): void;
 关于 Equal 的实现，笔者在没抄 ts-toolbelt 实现前写了几个假版本。
 
 ```ts
-type FakeEqual1<T, U> = T extends U
-  ? U extends T
-    ? true
-    : false
-  : false;
+type FakeEqual1<T, U> = T extends U ? (U extends T ? true : false) : false;
 ```
 
 问题何在呢？一个问题在于分配率问题，如:
@@ -625,4 +649,3 @@ type t2 = FakeEqual2<any, string>; // type t2 = true
 ```
 
 分配率问题解决了，但是并不能解决 `any` 的问题 = = (`any` 作为规避类型检查的用途，任何类型可以赋值给 `any`，`any` 也可以赋值给任何类型)
-

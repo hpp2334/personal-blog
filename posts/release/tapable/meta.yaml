@@ -1,0 +1,6 @@
+date: "2021-01-01"
+title: "Tapable 原理简析"
+tags: ["fe", "source"]
+abstract: "本文是对 Tapable 源码的简单分析。"
+requirements: ["熟悉发布订阅模式"]
+environment: [["tapable", "2.2.0"]]

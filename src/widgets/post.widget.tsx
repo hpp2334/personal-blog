@@ -115,9 +115,7 @@ function Link({ token }: { token: marked.Tokens.Link }) {
 }
 
 function Image({ token }: { token: marked.Tokens.Image }) {
-  return (
-    <NextImage width={600} height={600} src={token.href} alt={token.title} />
-  );
+  return <img width={600} src={token.href} alt={token.title} />;
 }
 
 function Code({ token }: { token: marked.Tokens.Code }) {

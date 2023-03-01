@@ -1,0 +1,6 @@
+date: "2020-11-22"
+title: "TypeScript Utility Type"
+tags: ["fe", "typescript"]
+abstract: "本文为学习笔记向文，希望通过手写一些 utility types 来加深对 TypeScript 类型的理解"
+requirements: ["使用过 TypeScript 内置的 utility types"]
+environment: [["TypeScript", "4.0.3"]]
