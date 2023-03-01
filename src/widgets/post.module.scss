@@ -1,13 +1,14 @@
+@import "@/widgets/global.module.scss";
+
 .post {
-  $primary-color-light: rgb(245, 250, 255);
-  $primary-color: rgb(31, 123, 228);
-  $primary-color-dark: rgb(0, 52, 110);
-  $gray-color-light: rgb(244, 244, 244);
-  $text-color: rgb(45, 45, 45);
+  * {
+    margin: 0;
+    padding: 0;
+  }
 
   .heading {
     font-weight: 400;
-    margin: 5px 0 0 0;
+    margin: 4px 0 16px 0;
     color: rgb(0, 52, 110);
     letter-spacing: 0.5px;
 
@@ -24,11 +25,13 @@
     color: $text-color;
     font-size: 16px;
     line-height: 150%;
+    margin: 16px 0;
   }
 
   .list {
     color: $text-color;
     font-size: 16px;
+    margin: 16px 0 16px 32px;
 
     & > li {
       line-height: 150%;

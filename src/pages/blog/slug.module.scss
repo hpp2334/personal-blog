@@ -1,0 +1,102 @@
+@use "sass:color";
+@import "@/widgets/global.module.scss";
+
+.slug {
+  .header {
+    .date {
+      color: $text-color-light;
+      letter-spacing: 1px;
+    }
+
+    .title {
+      margin: 8px 0;
+      font-weight: 400;
+      letter-spacing: 2px;
+    }
+
+    .tags {
+      display: flex;
+      gap: 4px;
+      font-size: 14px;
+
+      .tag {
+        $h: 24px;
+
+        min-width: 20px;
+        height: $h;
+        border-radius: $h;
+        border: 1px solid black;
+        padding: 0 8px;
+        line-height: $h;
+      }
+    }
+
+    .cards {
+      display: flex;
+      gap: 16px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+      color: $text-color;
+
+      @mixin card($col) {
+        // border: 2px solid $col;
+        border-radius: 16px;
+        padding: 16px 16px;
+        flex-grow: 1;
+        background-color: lighten($col, 40);
+
+        .title {
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: $col;
+          //   color: white;
+          margin-top: 0;
+          user-select: none;
+          font-size: 20px;
+          font-weight: 600;
+        }
+      }
+
+      .references {
+        $col: rgb(234, 152, 0);
+        @include card($col);
+
+        .reference {
+          display: block;
+          text-decoration: none;
+          margin: 4px 0;
+          padding: 4px 8px;
+          border-radius: 8px;
+          color: $text-color;
+          transition: transform 0.2s;
+
+          &:hover {
+            // background-color: $col;
+            // color: white;
+            background-color: white;
+            transform: scale(1.05);
+
+            .link {
+              //   color: white;
+            }
+          }
+
+          .link {
+            font-size: 10px;
+            color: $text-color-light;
+          }
+        }
+      }
+
+      .requirements {
+        $col: rgb(228, 61, 0);
+        @include card($col);
+      }
+
+      .environments {
+        $col: rgb(229, 0, 126);
+        @include card($col);
+      }
+    }
+  }
+}

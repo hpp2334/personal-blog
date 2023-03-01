@@ -8,6 +8,9 @@ import { marked } from "marked";
 import constate from "constate";
 import React, { useMemo } from "react";
 import { PostContentWidget } from "@/widgets/post.widget";
+import styles from "./slug.module.scss";
+import { fmtDate } from "@/utils/common";
+import classNames from "classnames";
 
 interface UrlQuery {
   slug: string[];
@@ -76,34 +79,49 @@ function PostContent() {
   return <PostContentWidget tokens={tokens} />;
 }
 
+function PostCard() {}
+
 function PostHeader({ meta }: { meta: PostMeta }) {
   return (
-    <div>
-      <div>{meta.date}</div>
-      <h1>{meta.title}</h1>
-      <div>
+    <div className={styles.header}>
+      <div className={styles.date}>{fmtDate(meta.date, "YYYY年MM月DD日")}</div>
+      <h1 className={styles.title}>{meta.title}</h1>
+      <div className={styles.tags}>
         {meta.tags.map((t) => (
-          <div key={t}>{TAGS[t]?.name.cn ?? t}</div>
-        ))}
-      </div>
-      <div>
-        {meta.references.map(([t, href], idx) => (
-          <a key={idx} href={href} target="_blank">
-            {t}
-          </a>
-        ))}
-      </div>
-      <div>
-        {meta.requirements.map((t, idx) => (
-          <div key={idx}>{t}</div>
-        ))}
-      </div>
-      <div>
-        {meta.environment.map(([e, v], idx) => (
-          <div>
-            {e}: {v}
+          <div key={t} className={styles.tag}>
+            {TAGS[t]?.name.cn ?? t}
           </div>
         ))}
+      </div>
+      <div className={styles.cards}>
+        <div className={classNames(styles.references)}>
+          <div className={styles.title}>references</div>
+          {meta.references.map(([t, href], idx) => (
+            <a
+              key={idx}
+              href={href}
+              target="_blank"
+              className={styles.reference}
+            >
+              <div className={styles.text}>{t}</div>
+              <div className={styles.link}>{href}</div>
+            </a>
+          ))}
+        </div>
+        <div className={classNames(styles.requirements)}>
+          <div className={styles.title}>requirements</div>
+          {meta.requirements.map((t, idx) => (
+            <div key={idx}>{t}</div>
+          ))}
+        </div>
+        <div className={classNames(styles.environments)}>
+          <div className={styles.title}>environments</div>
+          {meta.environment.map(([e, v], idx) => (
+            <div>
+              {e}: {v}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -119,7 +137,7 @@ export default function PostDetail({ post }: Props) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <PostProvider rawStr={post.rawStr}>
-        <main>
+        <main className={styles.slug}>
           <PostHeader meta={post.meta} />
           <PostContent />
         </main>

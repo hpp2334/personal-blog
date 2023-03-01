@@ -127,11 +127,11 @@ function Code({ token }: { token: marked.Tokens.Code }) {
       theme={materialLight}
       readOnly
       extensions={[
+        material,
         javascript({ jsx: true, typescript: true }),
         cpp(),
         json(),
         rust(),
-        material,
       ]}
     />
   );
