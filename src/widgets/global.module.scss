@@ -4,3 +4,17 @@ $primary-color-dark: rgb(0, 52, 110);
 $gray-color-light: rgb(244, 244, 244);
 $text-color: rgb(45, 45, 45);
 $text-color-light: rgb(136, 136, 136);
+
+$website-bg-color: lighten($primary-color, 46);
+
+$max-small-screen-width: 768px;
+
+@mixin website-bg {
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  background-color: $website-bg-color;
+  z-index: -999;
+}

@@ -12,6 +12,7 @@ import styles from "./slug.module.scss";
 import { fmtDate } from "@/utils/common";
 import classNames from "classnames";
 import { AppBar } from "@/widgets/appbar";
+import { FullscreenScrollable, Layout } from "@/widgets/layout";
 
 interface UrlQuery {
   slug: string[];
@@ -80,8 +81,6 @@ function PostContent() {
   return <PostContentWidget tokens={tokens} />;
 }
 
-function PostCard() {}
-
 function PostHeader({ meta }: { meta: PostMeta }) {
   return (
     <div className={styles.header}>
@@ -143,13 +142,18 @@ export default function PostDetail({ post }: Props) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <AppBar />
-      <PostProvider rawStr={post.rawStr}>
-        <main className={styles.slug}>
-          <PostHeader meta={post.meta} />
-          <PostContent />
-        </main>
-      </PostProvider>
+      <FullscreenScrollable>
+        <div className={styles.mask} />
+        <AppBar />
+        <PostProvider rawStr={post.rawStr}>
+          <main className={styles.slug}>
+            <Layout>
+              <PostHeader meta={post.meta} />
+              <PostContent />
+            </Layout>
+          </main>
+        </PostProvider>
+      </FullscreenScrollable>
     </>
   );
 }

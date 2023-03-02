@@ -1,19 +1,20 @@
 @use "sass:color";
 @import "@/widgets/global.module.scss";
 
-.slug {
-  margin-top: 20px;
+$top: 60px;
+.mask {
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 250px + $top;
+  background-color: $website-bg-color;
+  z-index: -999;
+}
 
-  &::before {
-    position: absolute;
-    content: "";
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 270px;
-    background-color: lighten($primary-color, 46);
-    z-index: -999;
-  }
+.slug {
+  padding: $top 0;
 
   .header {
     display: flex;
@@ -45,13 +46,14 @@
         border: 1px solid black;
         padding: 0 8px;
         line-height: $h;
+        user-select: none;
       }
     }
 
     .cards {
       display: flex;
       gap: 16px;
-      margin: 20px 0;
+      margin: 40px 0 20px 0;
       flex-wrap: wrap;
       color: $text-color;
 

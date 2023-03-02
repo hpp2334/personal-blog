@@ -31,26 +31,51 @@ export function AppBar() {
 
   return (
     <div className={styles.appbar}>
-      <div className={styles.left}>{WebsiteMeta.title}</div>
-      <div className={styles.navs}>
-        {config.map((conf, idx) => {
-          const active = conf.test(router.pathname);
-          const handleClick = () => {
-            router.push(conf.to);
-          };
-          return (
-            <div
-              key={idx}
-              onClick={handleClick}
-              className={classNames({
-                [styles.nav]: true,
-                [styles.active]: active,
-              })}
-            >
-              {conf.label}
-            </div>
-          );
-        })}
+      <div className={styles.big}>
+        <div className={styles.left}>{WebsiteMeta.title}</div>
+        <div className={styles.navs}>
+          {config.map((conf, idx) => {
+            const active = conf.test(router.pathname);
+            const handleClick = () => {
+              router.push(conf.to);
+            };
+            return (
+              <div
+                key={idx}
+                onClick={handleClick}
+                className={classNames({
+                  [styles.nav]: true,
+                  [styles.active]: active,
+                })}
+              >
+                {conf.label}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className={styles.small}>
+        <div className={styles.left}>{WebsiteMeta.title}</div>
+        <div className={styles.menuMask}>
+          {config.map((conf, idx) => {
+            const active = conf.test(router.pathname);
+            const handleClick = () => {
+              router.push(conf.to);
+            };
+            return (
+              <div
+                key={idx}
+                onClick={handleClick}
+                className={classNames({
+                  [styles.nav]: true,
+                  [styles.active]: active,
+                })}
+              >
+                {conf.label}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

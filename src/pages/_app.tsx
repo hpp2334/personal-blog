@@ -10,8 +10,23 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
       <style jsx global>{`
+        * {
+          padding: 0;
+          margin: 0;
+        }
+
         html {
           font-family: ${noto.style.fontFamily};
+        }
+
+        body {
+          max-width: 100vw;
+          min-width: 100vw;
+          height: 100vh;
+        }
+
+        #__next {
+          max-height: 100%;
         }
       `}</style>
       <Component {...pageProps} />

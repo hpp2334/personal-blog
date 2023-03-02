@@ -24,6 +24,18 @@ export const TAGS: Record<string, TagInfo | undefined> = {
       cn: "源码分析",
     },
   },
+  ng: {
+    name: {
+      en: "Angular",
+      cn: "Angular",
+    },
+  },
+  typescript: {
+    name: {
+      en: "TypeScript",
+      cn: "TypeScript",
+    },
+  },
 };
 
 export interface PostMeta {
