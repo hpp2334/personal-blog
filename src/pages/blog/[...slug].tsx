@@ -11,7 +11,7 @@ import { PostContentWidget } from "@/widgets/post.widget";
 import styles from "./slug.module.scss";
 import { fmtDate } from "@/utils/common";
 import classNames from "classnames";
-import { AppBar } from "@/widgets/appbar";
+import { AppBar, AppBarMenuMask } from "@/widgets/appbar";
 import { FullscreenScrollable, Layout } from "@/widgets/layout";
 
 interface UrlQuery {
@@ -142,6 +142,7 @@ export default function PostDetail({ post }: Props) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <AppBarMenuMask />
       <FullscreenScrollable>
         <div className={styles.mask} />
         <AppBar />

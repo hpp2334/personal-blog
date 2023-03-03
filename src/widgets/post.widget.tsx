@@ -1,15 +1,10 @@
 import { marked } from "marked";
-import CodeMirror from "@uiw/react-codemirror";
-import { javascript } from "@codemirror/lang-javascript";
-import { material, materialLight } from "@uiw/codemirror-theme-material";
-import { cpp } from "@codemirror/lang-cpp";
-import { json } from "@codemirror/lang-json";
-import { rust } from "@codemirror/lang-rust";
 import React from "react";
 import NextLink from "next/link";
 import NextImage from "next/image";
 import styles from "./post.module.scss";
 import classnames from "classnames";
+import { Highlighter } from "./code.widget";
 
 export interface PostContentWidgetProps {
   tokens: marked.TokensList;
@@ -119,20 +114,7 @@ function Image({ token }: { token: marked.Tokens.Image }) {
 }
 
 function Code({ token }: { token: marked.Tokens.Code }) {
-  return (
-    <CodeMirror
-      value={token.text}
-      theme={materialLight}
-      readOnly
-      extensions={[
-        material,
-        javascript({ jsx: true, typescript: true }),
-        cpp(),
-        json(),
-        rust(),
-      ]}
-    />
-  );
+  return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
 }
 
 export function PostContentWidget({ tokens }: PostContentWidgetProps) {

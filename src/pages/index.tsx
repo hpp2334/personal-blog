@@ -4,7 +4,7 @@ import { GetStaticProps } from "next";
 import { getPosts } from "@/data/posts.data";
 import Link from "next/link";
 import { getPostHref, PostMeta, TAGS } from "@/core/post.core";
-import { AppBar } from "@/widgets/appbar";
+import { AppBar, AppBarMenuMask } from "@/widgets/appbar";
 import { fmtDate } from "@/utils/common";
 import styles from "./home.module.scss";
 import { FullscreenScrollable, Layout } from "@/widgets/layout";
@@ -34,6 +34,7 @@ export default function Home(props: Props) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className={styles.homeMask} />
+      <AppBarMenuMask />
       <FullscreenScrollable>
         <AppBar />
         <main className={styles.home}>
