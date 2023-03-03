@@ -5,6 +5,7 @@
     margin: 0;
     padding: 0;
   }
+  color: $text-color;
 
   .heading {
     font-weight: 400;
@@ -41,7 +42,6 @@
   .codespan {
     font-size: 12px;
     background-color: $gray-color-light;
-    color: $text-color;
     padding: 2px 4px;
     border-radius: 2px;
   }
@@ -50,5 +50,23 @@
     color: $text-color;
     font-size: 16px;
     font-weight: 600;
+  }
+
+  .link {
+    text-decoration: none;
+    color: $primary-color;
+    transition: color 0.2s;
+
+    &:hover {
+      color: $primary-color-dark;
+    }
+  }
+
+  .blockQuote {
+    background-color: $primary-color-light;
+    color: $text-color-light;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 14px;
   }
 }

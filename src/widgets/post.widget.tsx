@@ -103,7 +103,7 @@ function Strong({ token }: { token: marked.Tokens.Strong }) {
 
 function Link({ token }: { token: marked.Tokens.Link }) {
   return (
-    <NextLink href={token.href} target="_blank">
+    <NextLink href={token.href} target="_blank" className={styles.link}>
       <CommonTokens tokens={token.tokens} />
     </NextLink>
   );
@@ -115,6 +115,14 @@ function Image({ token }: { token: marked.Tokens.Image }) {
 
 function Code({ token }: { token: marked.Tokens.Code }) {
   return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
+}
+
+function BlockQuote({ token }: { token: marked.Tokens.Blockquote }) {
+  return (
+    <div className={styles.blockQuote}>
+      <CommonToken token={token} />
+    </div>
+  );
 }
 
 export function PostContentWidget({ tokens }: PostContentWidgetProps) {
@@ -132,6 +140,8 @@ export function PostContentWidget({ tokens }: PostContentWidgetProps) {
                 return <List token={token} />;
               case "code":
                 return <Code token={token} />;
+              case "blockquote":
+                return <BlockQuote token={token} />;
               default:
                 return <CommonToken token={token} />;
             }
