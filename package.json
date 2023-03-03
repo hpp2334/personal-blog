@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@next/font": "13.1.6",
+    "@stackblitz/sdk": "^1.8.2",
     "@types/marked": "^4.0.8",
     "@types/node": "18.13.0",
     "@types/react": "18.0.27",

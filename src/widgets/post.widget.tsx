@@ -5,10 +5,16 @@ import NextImage from "next/image";
 import styles from "./post.module.scss";
 import classnames from "classnames";
 import { Highlighter } from "./code.widget";
+import dynamic from "next/dynamic";
+import yaml from "yaml";
 
 export interface PostContentWidgetProps {
   tokens: marked.TokensList;
 }
+
+const Stackblitz = dynamic(() =>
+  import("./stackblitz.widget").then((v) => v.Stackblitz)
+);
 
 function CommonToken({ token }: { token: marked.Token }) {
   if (
@@ -114,6 +120,10 @@ function Image({ token }: { token: marked.Tokens.Image }) {
 }
 
 function Code({ token }: { token: marked.Tokens.Code }) {
+  if (token.lang === "yaml:stackblitz") {
+    const obj = yaml.parse(token.text);
+    return <Stackblitz {...obj} />;
+  }
   return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
 }
 

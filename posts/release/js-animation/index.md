@@ -1,5 +1,3 @@
-import { JsAnimiationLibraryDemo } from "./js-animation-library-demo"
-
 ## 前言
 
 本文阐述了前端动画主流实现方式之一的 JavaScript 动画实现的要点，并通过学习 anime.js，编写一个较小的 JavaScript 动画库以加深对其的理解。
@@ -81,4 +79,7 @@ anime({
 
 您可以从中了解一个简单的声明式动画库是如何实现的。
 
-<JsAnimiationLibraryDemo />
+```yaml:stackblitz
+id: "typescript-pguhp7"
+openFile: "index.ts"
+```

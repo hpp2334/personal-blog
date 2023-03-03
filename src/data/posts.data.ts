@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs/promises";
 import { existsSync } from "fs";
 import { Post, PostMeta } from "@/core/post.core";
+import yaml from "yaml";
 
 const POSTS_DRAFT_DIR = path.resolve(process.cwd(), "./posts/draft");
 const POSTS_RELEASE_DIR = path.resolve(process.cwd(), "./posts/release");
@@ -16,7 +17,6 @@ async function parseMeta(
   postDir: string,
   metaYaml: Buffer
 ): Promise<PostMeta> {
-  const yaml = await import("yaml");
   const ret = yaml.parse(metaYaml.toString("utf-8"));
   {
     // @unsafe
