@@ -182,9 +182,6 @@ function WrapperSandpack({ entryKey }: { entryKey: string }) {
       <Sandpack
         theme={githubLight}
         template={codeDemo.template as any}
-        customSetup={{
-          entry: codeDemo.entry,
-        }}
         files={Object.fromEntries(
           codeDemo.files.map((t) => [t.path, t.data] as const)
         )}

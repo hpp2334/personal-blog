@@ -10,21 +10,17 @@ codeDemo:
   codes:
     - key: "drag-block-anywhere"
       path: "drag-block-anywhere"
-      entry: "index.js"
       files: ["index.html", "index.js", "index.css"]
       template: "vanilla"
     - key: "drag-file-from-os"
       path: "drag-file-from-os"
-      entry: "index.js"
       files: ["index.html", "index.js"]
       template: "vanilla"
     - key: "drag-to-show-innerText"
       path: "drag-to-show-innerText"
-      entry: "index.js"
       files: ["index.html", "index.js", "index.css"]
       template: "vanilla"
     - key: "simple-drag-list"
       path: "simple-drag-list"
-      entry: "App.js"
       files: ["App.js", "drag-line.js", "drag-list.js"]
       template: "react"
