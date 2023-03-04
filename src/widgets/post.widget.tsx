@@ -201,7 +201,6 @@ function Code({ token }: { token: marked.Tokens.Code }) {
   }
   if (token.lang === "yaml:codeSandbox") {
     const { url, height } = yaml.parse(token.text);
-    console.log(url, height);
     return (
       <iframe
         height={height}

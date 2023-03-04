@@ -49,7 +49,7 @@ export const recommendMaterials: MaterialConfig = [
   },
 ];
 
-export const selfMaterials: Config = [
+export const selfMaterials: MaterialConfig = [
   {
     section: "Utility",
     items: [
