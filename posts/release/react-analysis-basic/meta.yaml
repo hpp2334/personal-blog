@@ -1,0 +1,14 @@
+date: "2021-05-18"
+title: "React 机制基础"
+tags: ["fe", "react", "source"]
+abstract: "React 机制基础。"
+state: "wip"
+requirements: ["使用过 React"]
+series: "react-analysis"
+references:
+  [
+    [
+      "10.scheduler&lane模型(来看看react是暂停、继续和插队的)",
+      "https://xiaochen1024.com/article_item/600acd54245877002ed5df04",
+    ],
+  ]

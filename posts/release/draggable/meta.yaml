@@ -1,0 +1,26 @@
+date: "2021-04-14"
+title: "前端拖拽功能实现"
+tags: ["fe"]
+abstract: "本文以 Demo 为主，简要介绍如何通过 Drag/Drop API 与 通过鼠标事件模拟 实现拖拽功能"
+requirements: []
+references:
+  [["react-drag-listview", "https://github.com/raisezhang/react-drag-listview"]]
+codeDemo:
+  root: "./demos"
+  codes:
+    - key: "drag-block-anywhere"
+      path: "drag-block-anywhere"
+      files: ["index.html", "index.js", "index.css"]
+      template: "vanilla"
+    - key: "drag-file-from-os"
+      path: "drag-file-from-os"
+      files: ["index.html", "index.js"]
+      template: "vanilla"
+    - key: "drag-to-show-innerText"
+      path: "drag-to-show-innerText"
+      files: ["index.html", "index.js", "index.css"]
+      template: "vanilla"
+    - key: "simple-drag-list"
+      path: "simple-drag-list"
+      files: ["App.js", "drag-line.js", "drag-list.js"]
+      template: "react"

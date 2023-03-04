@@ -1,0 +1,54 @@
+date: "2022-03-17"
+title: "从库学 Rust - miniminiserde"
+tags: ["rust"]
+abstract: "本文实现了一个简化版本的 miniserde。"
+requirements: ["使用过 serde"]
+series: "learn-rust-by-lib"
+references:
+  [
+    [
+      "rust 语言基础学习: 写时克隆智能指针 Cow",
+      "https://blog.frognew.com/2020/07/rust-cow-smart-pointer.html",
+    ],
+    [
+      "Trait std::ops::Deref - Rust 官方文档",
+      "https://doc.rust-lang.org/std/ops/trait.Deref.html",
+    ],
+    [
+      "The dereference operator - Rust 官方文档",
+      "https://doc.rust-lang.org/reference/expressions/operator-expr.html#the-dereference-operator",
+    ],
+    [
+      "【翻译】 Rust 中的 String 和&str",
+      "https://zhuanlan.zhihu.com/p/123278299",
+    ],
+    [
+      "rust 入门笔记---Deref 和 Deref coercion",
+      "https://zhuanlan.zhihu.com/p/155586683",
+    ],
+    [
+      "4.4. 变形 - Rust 死灵书",
+      "https://learnku.com/docs/nomicon/2018/44-deformation/4727",
+    ],
+    [
+      "Function core::mem::transmute - Rust 官方文档",
+      "https://doc.rust-lang.org/core/mem/fn.transmute.html#",
+    ],
+    [
+      "Enum std::borrow::Cow",
+      "https://doc.rust-lang.org/std/borrow/enum.Cow.html",
+    ],
+    [
+      "Rust: PhantomData，#may_dangle 和 Drop Check 真真假假",
+      "https://zhuanlan.zhihu.com/p/383004091",
+    ],
+    [
+      "深入 RUST 标准库内核—内存之 Unique 指针",
+      "https://learnku.com/articles/65521",
+    ],
+    [
+      "Struct std::mem::ManuallyDrop",
+      "https://doc.rust-lang.org/stable/std/mem/struct.ManuallyDrop.html",
+    ],
+    ["Destructors", "https://doc.rust-lang.org/reference/destructors.html"],
+  ]

@@ -1,0 +1,14 @@
+date: "2020-11-10"
+title: "Virtual DOM 与 Diff 算法简析"
+tags: ["fe", "react", "source"]
+abstract: "本文简析 Virtual DOM 与基于 Snabbdom 和 React 的 diff 算法"
+requirements: ["使用过 React/Vue"]
+references:
+  [
+    ["snabbdom github repo", "https://github.com/snabbdom/snabbdom"],
+    [
+      "React 技术揭秘 - 多节点 diff",
+      "https://react.iamkasong.com/diff/multi.html#%E6%A6%82%E8%A7%88",
+    ],
+    ["深入理解 React Diff 算法", "https://www.neroht.com/article-detail/25"],
+  ]

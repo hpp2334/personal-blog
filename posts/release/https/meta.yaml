@@ -1,0 +1,13 @@
+date: "2021-11-27"
+title: "常用通信协议 - HTTPS"
+tags: ["fe"]
+abstract: ""
+requirements: []
+series: "common-communications-protocol"
+references:
+  [
+    [
+      "The HTTPS protocol explained! — Under the Hood",
+      "https://anushadasari.medium.com/the-https-protocol-explained-under-the-hood-c7bd9f9aaa7b",
+    ],
+  ]

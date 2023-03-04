@@ -1,0 +1,196 @@
+.file-tabs {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 300px;
+  
+  --folder-back-bg: #1774a7;
+  --folder-back-width: 80px;
+  --folder-back-height: 50px;
+  
+  --folder-front-bg: #22a7f0;
+  --folder-front-width: 80px;
+  --folder-front-height: 40px;
+
+  --folder-radius: 5px;
+
+  --file-bg: #fff;
+  --file-width: 70px;
+  --file-height: 45px;
+
+  --file-radius: 5px;
+}
+
+.file-tabs .file-tabs__folder-back {
+  position: relative;
+  background-color: var(--folder-back-bg);
+  width: var(--folder-back-width);
+  height: var(--folder-back-height);
+  border-radius: 0 var(--folder-radius) var(--folder-radius) var(--folder-radius);
+  cursor: pointer;
+  perspective: 500px;
+}
+
+.file-tabs .file-tabs__folder-back::before {
+  --height: calc(var(--folder-back-height) / 10);
+
+  content: "";
+  position: absolute;
+  width: calc(var(--folder-back-width) / 2);
+  height: var(--height);
+  top: calc(-1 * var(--height));
+  left: 0;
+  border-radius: var(--folder-radius) var(--folder-radius) 0 0;
+  background-color: var(--folder-back-bg);
+}
+
+.file-tabs .file-tabs__folder-front {
+  width: var(--folder-front-width);
+  height: var(--folder-front-height);
+  border-radius: var(--folder-radius);
+  background-color: var(--folder-front-bg);
+  position: absolute;
+  bottom: 0;
+  transform-origin: 50% 100%;
+  z-index: 50;
+
+  transition: transform 0.2s;
+}
+
+.file-tabs .file-tabs__folder-front:hover {
+  transform: rotateX(-30deg);
+}
+
+.file-tabs .file-tabs__folder-front .file-tabs__btn {
+  --bar-length: calc(var(--folder-front-height) / 3);
+  --bar-thickness: calc(var(--folder-front-height) / 14);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+
+  transition: transform 0.2s;
+}
+
+.file-tabs .file-tabs__folder-back.open .file-tabs__folder-front .file-tabs__btn {
+  transform: rotateZ(45deg);
+}
+
+.file-tabs .file-tabs__folder-front .file-tabs__btn::before {
+  content: "";
+  position: absolute;
+  width: var(--bar-length);
+  height: var(--bar-thickness);
+  background-color: #fff;
+}
+
+.file-tabs .file-tabs__folder-front .file-tabs__btn::after {
+  content: "";
+  position: absolute;
+  width: var(--bar-thickness);
+  height: var(--bar-length);
+  background-color: #fff;
+}
+
+
+.file-tabs .file-tabs__file-list {
+  margin: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  align-items: flex-end;
+  justify-content: center;
+  perspective: 500px;
+}
+
+.file-tabs .file-tabs__file-list li {
+  display: block;
+  margin: 0;
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - var(--file-width) / 2);
+  width: var(--file-width);
+  height: var(--file-height);
+  border-radius: var(--file-radius);
+  list-style-type: none;
+  transition: transform 0.5s;
+}
+
+.file-tabs .file-tabs__folder-back.open .file-tabs__file-list li:hover {
+  transform: translateY(-20px);
+}
+
+.file-tabs .file-tabs__file-list li::before,
+.file-tabs .file-tabs__file-list li::after {
+  --rot-y: 0deg;
+  --rot-z: 180deg;
+
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: var(--file-width);
+  height: var(--file-height);
+  border-radius: var(--file-radius);
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transform: rotateY(var(--rot-y)) rotateZ(var(--rot-z));
+  
+  transition: transform 0.5s;
+}
+
+/* back */
+.file-tabs .file-tabs__file-list li::before {
+  background-color: rgba(255,255,255,0.8);
+}
+
+/* front */
+.file-tabs .file-tabs__file-list li::after {
+  --rot-y: 180deg;
+  line-height: var(--file-height);
+  text-align: center;
+}
+
+.file-tabs .file-tabs__folder-back.open .file-tabs__file-list li::before {
+  --rot-y: 180deg;
+  --rot-z: 0deg;
+}
+
+.file-tabs .file-tabs__folder-back.open .file-tabs__file-list li::after {
+  --rot-y: 360deg;
+  --rot-z: 0deg;
+}
+
+.file-tabs .file-tabs__file-list li:nth-child(1)::after {
+  content: "W";
+  background-color: rgb(163, 203, 255);
+  color: rgb(39, 114, 212);
+}
+
+.file-tabs .file-tabs__file-list li:nth-child(2)::after {
+  content: "P";
+  background-color: rgb(255, 192, 163);
+  color: rgb(180, 90, 48);
+}
+
+.file-tabs .file-tabs__file-list li:nth-child(3)::after {
+  content: "S";
+  background-color: rgb(163, 255, 163);
+  color: rgb(53, 128, 53);
+}
+
+.file-tabs .file-tabs__folder-back.open .file-tabs__file-list li:nth-child(1) {
+  transform: translate(-150px, -150px)
+}
+
+.file-tabs .file-tabs__folder-back.open .file-tabs__file-list li:nth-child(2) {
+  transform: translate(0px, -180px)
+}
+
+.file-tabs .file-tabs__folder-back.open .file-tabs__file-list li:nth-child(3) {
+  transform: translate(150px, -150px)
+}
+

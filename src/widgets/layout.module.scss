@@ -1,0 +1,28 @@
+@import "@/widgets/global.module.scss";
+
+.layout {
+  width: 100%;
+
+  .internal {
+    margin: 0 auto;
+    max-width: $max-small-screen-width - 40px;
+
+    @media screen and (max-width: $max-small-screen-width) {
+      padding: 0 20px;
+    }
+  }
+}
+
+.fullscreenScrollable {
+  height: 100vh;
+  overflow: auto;
+
+  .internal {
+    position: relative;
+  }
+}
+
+.bgMask {
+  @include website-bg;
+  bottom: 0;
+}

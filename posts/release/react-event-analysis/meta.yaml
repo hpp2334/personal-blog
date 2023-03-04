@@ -1,0 +1,15 @@
+date: "2021-03-30"
+title: "React 事件机制简析"
+tags: ["fe", "react", "source"]
+abstract: "本文简单分析了 React 事件机制原理。"
+requirements: ["使用过 React"]
+series: "react-analysis"
+references:
+  [
+    ["DOM事件机制", "https://juejin.cn/post/6844903731079675917"],
+    ["React 源码", "https://github.com/facebook/react"],
+    ["React 文档 - 合成事件", "https://zh-hans.reactjs.org/docs/events.html"],
+    ["React中的优先级", "https://www.neroht.com/article-detail/21"],
+    ["深入React合成事件机制原理", "https://www.neroht.com/article-detail/34"],
+  ]
+environment: [["React", "17.0.2"]]

@@ -1,0 +1,7 @@
+slug: "/blog/webpack-loader"
+date: "2021-01-22"
+title: "Webpack loader 简析"
+tags: ["fe", "webpack"]
+abstract: "本文简要分析了 webpack loader 运行机制与 css-loader, style-loader, file-loader 的基础工作原理。"
+requirements: ["使用过 webpack"]
+environment: [["webpack", "5.16.0"], ["loader-runner", "4.2.0"]]
