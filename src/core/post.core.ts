@@ -36,6 +36,18 @@ export const TAGS: Record<string, TagInfo | undefined> = {
       cn: "TypeScript",
     },
   },
+  rust: {
+    name: {
+      en: "Rust",
+      cn: "Rust",
+    },
+  },
+  cpp: {
+    name: {
+      en: "C++",
+      cn: "C++",
+    },
+  },
 };
 
 export interface CodeDemoEntry {

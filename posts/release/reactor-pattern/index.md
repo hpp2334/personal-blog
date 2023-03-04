@@ -1,28 +1,3 @@
----
-date: "2022-02-17"
-title: "浅谈 Reactor I/O 模式"
-tags: ["backend", "rust"]
-abstract: "本文阐述了 Reactor 线程池模式的原理与要点，实现了一个基于 Rust 的 TCP echo server Demo。"
-requirements: []
-references:
-  [
-    [
-      "Understanding Reactor Pattern for Highly Scalable I/O Bound Web Server",
-      "https://tianpan.co/blog/2015-01-13-understanding-reactor-pattern-for-highly-scalable-i-o-bound-web-server",
-    ],
-    [
-      "The Reactor-Executor Pattern",
-      "https://cfsamsonbooks.gitbook.io/epoll-kqueue-iocp-explained/appendix-1/reactor-executor-pattern",
-    ],
-    ["Java NIO 浅析", "https://tech.meituan.com/2016/11/04/nio.html"],
-    ["高性能 IO 模型分析-Reactor 模式和 Proactor 模式（二）", "https://zhuanlan.zhihu.com/p/95662364"],
-  ]
----
-
-import {
-ReactorPatternTcpEchoServerCode
-} from "./reactor-patter-code"
-
 ## 概述
 
 Reactor 模式属于事件驱动模型，通过 I/O 多路复用的方式，允许创建少量的线程即可处理大量的请求。
@@ -33,7 +8,7 @@ Reactor 模式属于事件驱动模型，通过 I/O 多路复用的方式，允�
 
 下图为 Reactor 线程池模式的组成与职能。
 
-![Reactor - Thread pool pattern](./thread-pool-pattern.png)
+![Reactor - Thread pool pattern](/reactor-pattern/thread-pool-pattern.png)
 
 I/O 池是操作系统提供的 I/O 机制或对应的封装，这里的 I/O 机制如 Linux 下的 epoll, AIO, io_uring，Mac 下的 kqueue，Windows 下的 IOPC。
 
@@ -274,6 +249,229 @@ impl Reactor {
 
 #### 完整代码
 
-<Collapse title="完整代码">
-  <ReactorPatternTcpEchoServerCode />
-</Collapse>
+tcp-client.mjs:
+
+```js
+import net from "net";
+import cluster from "cluster";
+
+const config = {
+  parallelism: 10,
+};
+
+if (cluster.isPrimary) {
+  for (let i = 0; i < config.parallelism; i++) {
+    cluster.fork();
+  }
+} else {
+  let n = 100;
+  let closed_num = 0;
+  for (let i = 0; i < n; i++) {
+    const client = new net.Socket();
+    client.connect(3001, "127.0.0.1", function () {
+      console.log(`process ${process.pid} connected`);
+      client.write(`[process ${process.pid}](${i}) message 1\n`);
+      client.write(`[process ${process.pid}](${i}) message 2\n`);
+      client.end();
+    });
+
+    client.on("data", function (data) {
+      console.log(data.toString());
+    });
+
+    client.on("error", function (err) {
+      console.log(err);
+    });
+
+    client.on("close", function () {
+      closed_num += 1;
+      if (closed_num === n) {
+        process.exit();
+      }
+    });
+  }
+}
+```
+
+tcp-server.rs:
+
+```rust
+use std::collections::{HashMap, HashSet};
+use std::io::{Read, Write};
+use std::sync::Arc;
+use std::vec;
+
+use mio::net::{TcpListener, TcpStream};
+use mio::{Events, Interest, Poll, Token, Waker};
+use threadpool::ThreadPool;
+
+struct Allocator {
+    id: usize,
+}
+impl Allocator {
+    pub fn new(start: usize) -> Self {
+        Allocator { id: start }
+    }
+    pub fn next(&mut self) -> usize {
+        let id = self.id;
+        self.id += 1;
+        id
+    }
+}
+
+const SERVER_TOKEN: Token = Token(0);
+const POLL_WAKER_TOKEN: Token = Token(1);
+const WORKER_POOL_SIZE: usize = 12;
+const CONNECTION_START_ID: usize = 1000;
+
+fn process(buf: &Vec<u8>) -> Vec<u8> {
+    let sleep_ms = 100;
+    std::thread::sleep(std::time::Duration::from_millis(sleep_ms));
+
+    buf.clone()
+}
+struct Reactor {
+    server: TcpListener,
+    poll: Poll,
+    poll_waker: Arc<Waker>,
+    worker_poll: ThreadPool,
+    connection_allocator: Allocator,
+    connections: HashMap<Token, TcpStream>,
+}
+
+impl Reactor {
+    pub fn new(addr: &str) -> Self {
+        let server = TcpListener::bind(addr.parse().unwrap()).unwrap();
+
+        let poll = Poll::new().unwrap();
+        let poll_waker = Arc::new(Waker::new(poll.registry(), POLL_WAKER_TOKEN).unwrap());
+        let worker_poll = threadpool::ThreadPool::new(WORKER_POOL_SIZE);
+
+        Self {
+            server,
+            poll,
+            poll_waker,
+            worker_poll,
+            connection_allocator: Allocator::new(CONNECTION_START_ID),
+            connections: HashMap::new(),
+        }
+    }
+
+    pub fn run(&mut self) -> Result<(), std::io::Error> {
+        let mut events = Events::with_capacity(128);
+        // proccessed connection
+        let (sender, receiver) = std::sync::mpsc::channel::<(Token, Vec<u8>)>();
+
+        self.poll
+            .registry()
+            .register(&mut self.server, SERVER_TOKEN, Interest::READABLE)
+            .unwrap();
+
+        let mut connections_work_count = HashMap::new();
+        let mut connections_closed = HashSet::new();
+
+        loop {
+            self.poll.poll(&mut events, None).unwrap();
+            for event in events.iter() {
+                match event.token() {
+                    // Reactor: accept in Acceptor
+                    SERVER_TOKEN => {
+                        self.handle_accept().unwrap();
+                    }
+                    POLL_WAKER_TOKEN => continue,
+                    Token(id) if id >= CONNECTION_START_ID => {
+                        let token = Token(id);
+                        let mut connection = self.connections.get(&token).unwrap();
+
+                        let mut read_buf = vec![];
+
+                        // Reactor: read buffer
+                        loop {
+                            let mut buf = vec![0; 128];
+                            match connection.read(&mut buf) {
+                                Ok(n) if n > 0 => {
+                                    read_buf.append(&mut buf);
+                                }
+                                Ok(n) if n == 0 => {
+                                    connections_closed.insert(token);
+                                    break;
+                                }
+                                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => break,
+                                Err(ref e) if e.kind() == std::io::ErrorKind::Interrupted => {
+                                    continue
+                                }
+                                Err(e) => return Err(e),
+                                _ => unreachable!(),
+                            }
+                        }
+
+                        // Reactor: dispatch task in thread pool
+                        let sender = sender.clone();
+                        let waker = self.poll_waker.clone();
+                        *connections_work_count.entry(token).or_insert(0) += 1;
+                        self.worker_poll.execute(move || {
+                            let buf = process(&read_buf);
+                            sender.send((token, buf)).unwrap();
+                            waker.wake().unwrap();
+                        });
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
+            while let Ok((token, buf)) = receiver.try_recv() {
+                println!("[{}] to send", token.0);
+                let mut connection = self.connections.get(&token).unwrap();
+                // Reactor: send buffer
+                connection.write(&buf).unwrap();
+
+                *connections_work_count.entry(token).or_insert(0) -= 1;
+            }
+
+            let connections_can_remove = connections_closed
+                .iter()
+                .filter(|token| {
+                    let count = connections_work_count.get(*token);
+                    count.is_none() || *count.unwrap() == 0
+                })
+                .map(|token| *token)
+                .collect::<Vec<Token>>();
+
+            connections_can_remove.into_iter().for_each(|token| {
+                println!("[{}] to drop", token.0);
+                let mut connection = self.connections.remove(&token).unwrap();
+                connections_closed.remove(&token);
+                connections_work_count.remove(&token);
+                self.poll.registry().deregister(&mut connection).unwrap();
+                drop(connection);
+            })
+        }
+    }
+
+    fn handle_accept(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        loop {
+            // Reactor: accept in Acceptor
+            match self.server.accept() {
+                Ok((mut connection, _addr)) => {
+                    let alloc = self.connection_allocator.next();
+                    let token = Token(alloc);
+                    self.poll
+                        .registry()
+                        .register(&mut connection, token, Interest::READABLE)
+                        .unwrap();
+                    self.connections.insert(token, connection);
+                }
+                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => break,
+                Err(ref e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                Err(err) => return Err(Box::new(err)),
+            }
+        }
+        Ok(())
+    }
+}
+
+fn main() {
+    let mut reactor = Reactor::new("127.0.0.1:3001");
+    reactor.run().unwrap();
+}
+```

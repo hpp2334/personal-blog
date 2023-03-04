@@ -1,19 +1,3 @@
----
-slug: "/blog/webpack-loader"
-date: "2021-01-22"
-title: "Webpack loader 简析"
-tags: ['fe', 'webpack']
-abstract: '本文简要分析了 webpack loader 运行机制与 css-loader, style-loader, file-loader 的基础工作原理。'
-requirements: [
-  '使用过 webpack'
-]
----
-
-## 环境
-
-- webpack: 5.16.0
-- loader-runner: 4.2.0
-
 ## 前言
 
 十分抱歉这么久没有更新，因为花了比较久的时间一直在写训练系统（当然还有摸鱼划水）。最近训练系统日趋完善，因而那部分放慢进度，专心充电！
@@ -28,10 +12,10 @@ requirements: [
 
 ## loader 的内联引入方式
 
-作为使用者，一般通过配置方式引入 loader，实际上其还可以通过 内联方式 与 CLI方式 引入。内联引入方式形式如 `[...loaders, file].join('!')`，例如：
+作为使用者，一般通过配置方式引入 loader，实际上其还可以通过 内联方式 与 CLI 方式 引入。内联引入方式形式如 `[...loaders, file].join('!')`，例如：
 
 ```js
-import Styles from 'style-loader!css-loader?modules!./styles.css';
+import Styles from "style-loader!css-loader?modules!./styles.css";
 ```
 
 另外，这种引入方式可以带有前缀：
@@ -48,21 +32,23 @@ import Styles from 'style-loader!css-loader?modules!./styles.css';
 
 ```js
 function loader(content, sourceMap, meta) {
-	// 
-	// this.async() 告知 loader-runner 异步执行
-	const callback = this.async();
+  //
+  // this.async() 告知 loader-runner 异步执行
+  const callback = this.async();
 
-	// 根据 content 进行一些处理
+  // 根据 content 进行一些处理
 
-	// 返回数据，此方法详细参数见 "Loader Context"
-	callback(null);
-	// 如果调用了 callback，应当始终返回 undefined
-	return;
+  // 返回数据，此方法详细参数见 "Loader Context"
+  callback(null);
+  // 如果调用了 callback，应当始终返回 undefined
+  return;
 }
 // （可选）如果定义了 raw = true，接收到的 content 将会是 Buffer 类型
 loader.raw = false;
 // （可选）如果 pitch，后续的 loader 不会被执行，关于 "pitch" 的更多
-loader.pitch = function (remainingRequest, precedingRequest, data) { /* ... */ }
+loader.pitch = function (remainingRequest, precedingRequest, data) {
+  /* ... */
+};
 
 // 导出这个函数
 module.exports = loader;
@@ -92,8 +78,8 @@ loader 的其他例子（同步、异步）见官方文档 [loader examples](htt
  * @param precedingRequest
  * @param data loaderContext.data，在 pitch 与 normal 阶段共享信息的 object
  */
-module.exports = function(remainingRequest, precedingRequest, data) {
-	// ...
+module.exports = function (remainingRequest, precedingRequest, data) {
+  // ...
 };
 ```
 
@@ -118,7 +104,7 @@ this.callback(
 ```
 
 - getOptions: 获取 loader 的 options
-- `emitFile(name: string, content: Buffer|string, sourceMap: {...})`: 向 webpack 发射一个文件，其中 content 是文件路径。此部分会放到 `buildInfo.assets` 中（详见xxx）
+- `emitFile(name: string, content: Buffer|string, sourceMap: {...})`: 向 webpack 发射一个文件，其中 content 是文件路径。此部分会放到 `buildInfo.assets` 中（详见 xxx）
 
 ## utils
 
@@ -138,6 +124,7 @@ webpack 提供 [loader-utils](https://github.com/webpack/loader-utils) 与 [sche
 下面简单分析 css-loader, style-loader, file-loader 的工作机制。
 
 约定：
+
 1. 不分析 HMR 逻辑，source map；
 2. 只分析到能够大致工作的部分，不会涉及浏览间差异时各 loader 的处理、loader 中的错误处理、防多次调用处理等；
 3. 暂不考虑 css module；
@@ -155,12 +142,12 @@ file-loader 用于将文件转为外置文件，并获得 url 链接。其原理
 ```js
 // __webpack_require__.d 为 webpack 中的 define 逻辑，相当于导出且某个值都是只读的
 __webpack_require__.d(__webpack_exports__, {
-  "default": () => __WEBPACK_DEFAULT_EXPORT__
+  default: () => __WEBPACK_DEFAULT_EXPORT__,
 });
 // __webpack_require__.p 为 webpack 中获取 publicPath 的结果，整个导出字符串即请求获取该 css 文件的链接地址
-const __WEBPACK_DEFAULT_EXPORT__ = (__webpack_require__.p + "35a770e9cd0c3ec97008038384244da8.css");
+const __WEBPACK_DEFAULT_EXPORT__ =
+  __webpack_require__.p + "35a770e9cd0c3ec97008038384244da8.css";
 ```
-
 
 ### css-loader
 
@@ -168,31 +155,33 @@ const __WEBPACK_DEFAULT_EXPORT__ = (__webpack_require__.p + "35a770e9cd0c3ec9700
 
 ```js
 // 这个runtime 待补充
-import ___CSS_LOADER_API_IMPORT___ from "./node_modules/css-loader/dist/runtime/api.js"
+import ___CSS_LOADER_API_IMPORT___ from "./node_modules/css-loader/dist/runtime/api.js";
 // 下面 "i[1]" 是由于 i[1] 为 css 的内容
-var ___CSS_LOADER_EXPORT___ = ___CSS_LOADER_API_IMPORT___(function(i){return i[1]})
-___CSS_LOADER_EXPORT___.push([module.id, /* 此处为 css 内容 */, ""]);
+var ___CSS_LOADER_EXPORT___ = ___CSS_LOADER_API_IMPORT___(function (i) {
+  return i[1];
+});
+___CSS_LOADER_EXPORT___.push([module.id /* 此处为 css 内容 */, , ""]);
 export default ___CSS_LOADER_EXPORT___;
 ```
 
 `___CSS_LOADER_EXPORT___` 是包含 css 代码的数组，形式为：
 
 ```ts
-type CSSList = Array<[
-	any, // 模块 id
-	any, // css 代码
-	any, // 媒体查询
-	any, // source map
-]>
+type CSSList = Array<
+  [
+    any, // 模块 id
+    any, // css 代码
+    any, // 媒体查询
+    any // source map
+  ]
+>;
 ```
 
 ### style-loader
 
 style-loader 用于将 css 文件插入到页面中的 `<style>` 或 `<link>` 中，常与 css-loader 配合使用（具体地，若插入到 `<style>` 则常与 css-loader 配合使用，若插入到 `<link>` 则常与 file-loader 配合使用）。其原理为：
 ① 定义 `pitch` 将其后的 loader 拦截
-② 插入 runtime 模块引用，包括两部分：
-    - 方法 `api`: 将 css 内容插入页面中的 `<style>` 或 `<link>` 中
-	  - 模块 `content`: 调用 css-loader 得到包含 css 代码的数组
+② 插入 runtime 模块引用，包括两部分： - 方法 `api`: 将 css 内容插入页面中的 `<style>` 或 `<link>` 中 - 模块 `content`: 调用 css-loader 得到包含 css 代码的数组
 ③ 以 `content` 和配置调用 `api`
 
 #### pitch
@@ -203,8 +192,13 @@ style-loader 直接定义了 pitch，在 pitch 中根据 `injectType` 返回代�
 ```js
 `
 // 引入 Runtime 代码，包括 api 模块 与 content 模块 (包含 CSS 代码)
-import api from ${loaderUtils.stringifyRequest(this, `!${path.join(__dirname, 'runtime/injectStylesIntoStyleTag.js')}`)};
-import content${namedExport ? ', * as locals' : ''} from ${loaderUtils.stringifyRequest(this, `!!${request}`)};
+import api from ${loaderUtils.stringifyRequest(
+  this,
+  `!${path.join(__dirname, "runtime/injectStylesIntoStyleTag.js")}`
+)};
+import content${
+  namedExport ? ", * as locals" : ""
+} from ${loaderUtils.stringifyRequest(this, `!!${request}`)};
 
 var options = ${JSON.stringify(runtimeOptions)};
 
@@ -218,7 +212,7 @@ var update = api(content, options);
 // ...HMR 代码逻辑
 
 export default content.locals || {};
-`
+`;
 ```
 
 #### Runtime
@@ -246,30 +240,34 @@ content 模块实际上就是 `CSSList`，其供 api 模块使用。
  * @param loader 一般是 loader 的绝对路径，可能包含 query string
  */
 function createLoaderObject(loader) {
-	var obj = {
-		path: null,
-		query: null,
-		fragment: null,
-		options: null,
-		ident: null,
-		normal: null, // normal 方法
-		pitch: null,  // pitch 方法
-		raw: null,
-		data: null,
-		pitchExecuted: false, // pitch 方法是否已执行
-		normalExecuted: false // normal 方法是否已执行
-	};
-	Object.defineProperty(obj, "request", {
-		enumerable: true,
-		get: function() {
-			return obj.path.replace(/#/g, "\0#") + obj.query.replace(/#/g, "\0#") + obj.fragment;
-		},
-		set: function(value) {
+  var obj = {
+    path: null,
+    query: null,
+    fragment: null,
+    options: null,
+    ident: null,
+    normal: null, // normal 方法
+    pitch: null, // pitch 方法
+    raw: null,
+    data: null,
+    pitchExecuted: false, // pitch 方法是否已执行
+    normalExecuted: false, // normal 方法是否已执行
+  };
+  Object.defineProperty(obj, "request", {
+    enumerable: true,
+    get: function () {
+      return (
+        obj.path.replace(/#/g, "\0#") +
+        obj.query.replace(/#/g, "\0#") +
+        obj.fragment
+      );
+    },
+    set: function (value) {
       // ...设置 path, query, fragment 等属性
-		}
-	});
-	obj.request = loader;
-	return obj;
+    },
+  });
+  obj.request = loader;
+  return obj;
 }
 ```
 
@@ -284,12 +282,12 @@ function loadLoader(loader, callback) {
   // 根据 loader.type 同步或异步加载，此处只考虑同步情况
   var module = require(loader.path);
 
-	loader.normal = typeof module === "function" ? module : module.default;
-	loader.pitch = module.pitch;
+  loader.normal = typeof module === "function" ? module : module.default;
+  loader.pitch = module.pitch;
   loader.raw = module.raw;
-  
-	callback();
-};
+
+  callback();
+}
 ```
 
 ### runSyncOrAsync
@@ -298,29 +296,29 @@ function loadLoader(loader, callback) {
 
 ```js
 function runSyncOrAsync(fn, context, args, callback) {
-	// 同步标记
-	var isSync = true;
+  // 同步标记
+  var isSync = true;
   // ... 完成标记，isDone
   // ... 错误标记，如 isError 等
 
-	context.async = function async() {
+  context.async = function async() {
     // ... 已完成检测
-		isSync = false;
-		return innerCallback;
+    isSync = false;
+    return innerCallback;
   };
 
-	var innerCallback = context.callback = function() {
-		// ... 已完成检测与标记
-		isSync = false;
+  var innerCallback = (context.callback = function () {
+    // ... 已完成检测与标记
+    isSync = false;
     callback.apply(null, arguments);
-	};
-  
+  });
+
   // 执行 normal/pitch 方法
   // 注意，如果方法中调用了 async，则 isSync = false
   var result = (function LOADER_EXECUTION() {
     return fn.apply(context, args);
-  }());
-  if(isSync) {
+  })();
+  if (isSync) {
     // ... 已完成检测与标记
     // ... 根据 result （是否为 undefined 或 thenable） 进行 callback，此处保留默认情况
     return callback(null, result);
@@ -332,104 +330,113 @@ function runSyncOrAsync(fn, context, args, callback) {
 
 ```js
 function iteratePitchingLoaders(options, loaderContext, callback) {
-	// 到末尾了，处理 resource
-	if(loaderContext.loaderIndex >= loaderContext.loaders.length)
-		return processResource(options, loaderContext, callback);
+  // 到末尾了，处理 resource
+  if (loaderContext.loaderIndex >= loaderContext.loaders.length)
+    return processResource(options, loaderContext, callback);
 
-	var currentLoaderObject = loaderContext.loaders[loaderContext.loaderIndex];
+  var currentLoaderObject = loaderContext.loaders[loaderContext.loaderIndex];
 
-	// pitch 被执行过了，则执行下一个 loader （从左到右顺序）
-	if(currentLoaderObject.pitchExecuted) {
-		loaderContext.loaderIndex++;
-		return iteratePitchingLoaders(options, loaderContext, callback);
-	}
+  // pitch 被执行过了，则执行下一个 loader （从左到右顺序）
+  if (currentLoaderObject.pitchExecuted) {
+    loaderContext.loaderIndex++;
+    return iteratePitchingLoaders(options, loaderContext, callback);
+  }
 
-	// load loader module
-	loadLoader(currentLoaderObject, function(err) {
+  // load loader module
+  loadLoader(currentLoaderObject, function (err) {
     // ... 错误处理
-		var fn = currentLoaderObject.pitch;
-		currentLoaderObject.pitchExecuted = true;
-		if(!fn) return iteratePitchingLoaders(options, loaderContext, callback);
+    var fn = currentLoaderObject.pitch;
+    currentLoaderObject.pitchExecuted = true;
+    if (!fn) return iteratePitchingLoaders(options, loaderContext, callback);
 
-		runSyncOrAsync(
-			fn,
+    runSyncOrAsync(
+      fn,
       loaderContext,
-      [loaderContext.remainingRequest, loaderContext.previousRequest, currentLoaderObject.data = {}],
-			function(err) {
-				// ... 错误处理
-				var args = Array.prototype.slice.call(arguments, 1);
-				var hasArg = args.some(function(value) {
-					return value !== undefined;
+      [
+        loaderContext.remainingRequest,
+        loaderContext.previousRequest,
+        (currentLoaderObject.data = {}),
+      ],
+      function (err) {
+        // ... 错误处理
+        var args = Array.prototype.slice.call(arguments, 1);
+        var hasArg = args.some(function (value) {
+          return value !== undefined;
         });
-        
+
         // pitch 函数有返回时则截断，开始执行 normal，normal 得到的 content 是 args
-				if(hasArg) {
-					loaderContext.loaderIndex--;
-					iterateNormalLoaders(options, loaderContext, args, callback);
-				} else {
-					iteratePitchingLoaders(options, loaderContext, callback);
-				}
-			}
-		);
-	});
+        if (hasArg) {
+          loaderContext.loaderIndex--;
+          iterateNormalLoaders(options, loaderContext, args, callback);
+        } else {
+          iteratePitchingLoaders(options, loaderContext, callback);
+        }
+      }
+    );
+  });
 }
 
 function iterateNormalLoaders(options, loaderContext, args, callback) {
   // normal 全部处理结束
-	if(loaderContext.loaderIndex < 0)
-		return callback(null, args);
+  if (loaderContext.loaderIndex < 0) return callback(null, args);
 
-	var currentLoaderObject = loaderContext.loaders[loaderContext.loaderIndex];
+  var currentLoaderObject = loaderContext.loaders[loaderContext.loaderIndex];
 
-	if(currentLoaderObject.normalExecuted) {
-		loaderContext.loaderIndex--;
-		return iterateNormalLoaders(options, loaderContext, args, callback);
-	}
+  if (currentLoaderObject.normalExecuted) {
+    loaderContext.loaderIndex--;
+    return iterateNormalLoaders(options, loaderContext, args, callback);
+  }
 
-	var fn = currentLoaderObject.normal;
-	currentLoaderObject.normalExecuted = true;
-	if(!fn) {
-		return iterateNormalLoaders(options, loaderContext, args, callback);
+  var fn = currentLoaderObject.normal;
+  currentLoaderObject.normalExecuted = true;
+  if (!fn) {
+    return iterateNormalLoaders(options, loaderContext, args, callback);
   }
 
   // ...
 
-	runSyncOrAsync(fn, loaderContext, args, function(err) {
-		// ... 错误处理
+  runSyncOrAsync(fn, loaderContext, args, function (err) {
+    // ... 错误处理
 
-		var args = Array.prototype.slice.call(arguments, 1);
-		iterateNormalLoaders(options, loaderContext, args, callback);
-	});
+    var args = Array.prototype.slice.call(arguments, 1);
+    iterateNormalLoaders(options, loaderContext, args, callback);
+  });
 }
 
 function processResource(options, loaderContext, callback) {
-	// 定位到最后一个 loader
-	loaderContext.loaderIndex = loaderContext.loaders.length - 1;
+  // 定位到最后一个 loader
+  loaderContext.loaderIndex = loaderContext.loaders.length - 1;
 
-	var resourcePath = loaderContext.resourcePath;
-	if(resourcePath) {
+  var resourcePath = loaderContext.resourcePath;
+  if (resourcePath) {
     // 读取文件内容后开始从最后一个 loader 执行（从右到左 normal）
-		options.processResource(loaderContext, resourcePath, function(err, buffer) {
-			if(err) return callback(err);
-			options.resourceBuffer = buffer;
-			iterateNormalLoaders(options, loaderContext, [buffer], callback);
-		});
-	} else {
-		iterateNormalLoaders(options, loaderContext, [null], callback);
-	}
+    options.processResource(
+      loaderContext,
+      resourcePath,
+      function (err, buffer) {
+        if (err) return callback(err);
+        options.resourceBuffer = buffer;
+        iterateNormalLoaders(options, loaderContext, [buffer], callback);
+      }
+    );
+  } else {
+    iterateNormalLoaders(options, loaderContext, [null], callback);
+  }
 }
 
 function runLoaders(options, callback) {
-	// ...
-	// Loader Context
-	var loaderContext = options.context || {};
-	// 读取 resource
-	var processResource = options.processResource || ((readResource, context, resource, callback) => {
-		context.addDependency(resource);
-		readResource(resource, callback);
-	}).bind(null, options.readResource || fs.readFile.bind(fs));
+  // ...
+  // Loader Context
+  var loaderContext = options.context || {};
+  // 读取 resource
+  var processResource =
+    options.processResource ||
+    ((readResource, context, resource, callback) => {
+      context.addDependency(resource);
+      readResource(resource, callback);
+    }).bind(null, options.readResource || fs.readFile.bind(fs));
 
-	/*
+  /*
 	...挂载 loaderContext，如
 	{
 		loaderIndex: 0, // 当前 loader 下标
@@ -439,33 +446,40 @@ function runLoaders(options, callback) {
 	}
 	下面保留 remainingRequest 的挂载方式
 	*/
-	Object.defineProperty(loaderContext, "remainingRequest", {
-		enumerable: true,
-		get: function() {
-			if(loaderContext.loaderIndex >= loaderContext.loaders.length - 1 && !loaderContext.resource)
-				return "";
-			return loaderContext.loaders.slice(loaderContext.loaderIndex + 1).map(function(o) {
-				return o.request;
-			}).concat(loaderContext.resource || "").join("!");
-		}
-	});
+  Object.defineProperty(loaderContext, "remainingRequest", {
+    enumerable: true,
+    get: function () {
+      if (
+        loaderContext.loaderIndex >= loaderContext.loaders.length - 1 &&
+        !loaderContext.resource
+      )
+        return "";
+      return loaderContext.loaders
+        .slice(loaderContext.loaderIndex + 1)
+        .map(function (o) {
+          return o.request;
+        })
+        .concat(loaderContext.resource || "")
+        .join("!");
+    },
+  });
 
-	var processOptions = {
-		resourceBuffer: null,
-		processResource: processResource
-	};
-	iteratePitchingLoaders(processOptions, loaderContext, function(err, result) {
-		// 处理结果
-	});
-};
+  var processOptions = {
+    resourceBuffer: null,
+    processResource: processResource,
+  };
+  iteratePitchingLoaders(processOptions, loaderContext, function (err, result) {
+    // 处理结果
+  });
+}
 ```
 
 ## 一些其他的与本文关系不大的知识点
 
-### __webpack_nonce__
+### **webpack_nonce**
 
 [https://webpack.docschina.org/guides/csp/](https://webpack.docschina.org/guides/csp/)  
-[https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLElement/nonce](https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLElement/nonce)  
+[https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLElement/nonce](https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLElement/nonce)
 
 与 CSP 相关，是一个 base64 字符串。
 
@@ -479,11 +493,11 @@ function runLoaders(options, callback) {
 
 ```js
 class LoadingLoaderError extends Error {
-	constructor(message) {
-		super(message);
-		this.name = "LoaderRunnerError";
-		Error.captureStackTrace(this, this.constructor);
-	}
+  constructor(message) {
+    super(message);
+    this.name = "LoaderRunnerError";
+    Error.captureStackTrace(this, this.constructor);
+  }
 }
 ```
 

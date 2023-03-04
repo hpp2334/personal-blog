@@ -1,3 +1,5 @@
+import unescape from "lodash-es/unescape";
+
 export function fmtDate(timestamp: number, fmt: string) {
   const date = new Date(timestamp);
   const YYYY = date.getFullYear();
@@ -15,4 +17,8 @@ export function fmtDate(timestamp: number, fmt: string) {
     .replaceAll("mm", mm.toString())
     .replaceAll("ss", ss.toString());
   return ret;
+}
+
+export function decodeHTMLEntities(encodedStr: string) {
+  return unescape(encodedStr);
 }

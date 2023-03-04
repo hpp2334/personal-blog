@@ -21,6 +21,7 @@
     "constate": "^3.3.2",
     "eslint": "8.33.0",
     "eslint-config-next": "13.1.6",
+    "lodash-es": "^4.17.21",
     "marked": "^4.2.12",
     "next": "13.1.6",
     "react": "18.2.0",
@@ -32,6 +33,7 @@
     "yaml": "^2.2.1"
   },
   "devDependencies": {
+    "@types/lodash-es": "^4.17.6",
     "@types/react-syntax-highlighter": "^15.5.6"
   }
 }

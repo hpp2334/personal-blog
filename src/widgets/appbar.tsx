@@ -22,11 +22,11 @@ const config = [
     test: (p: string) => p.startsWith("/materials"),
     to: "/materials",
   },
-  {
-    label: "About",
-    test: (p: string) => p.startsWith("/about"),
-    to: "/materials",
-  },
+  //   {
+  //     label: "About",
+  //     test: (p: string) => p.startsWith("/about"),
+  //     to: "/about",
+  //   },
 ];
 
 const [smallMaskVisibleSender, smallMaskVisibleRM] = createChannel<boolean>();

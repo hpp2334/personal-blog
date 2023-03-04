@@ -28,6 +28,8 @@ async function parseMeta(
     ret.references ??= [];
     ret.tags ??= [];
     ret.environment ??= [];
+    ret.codes = [];
+
     if (ret.codeDemo) {
       const _codeDemo = ret.codeDemo;
       const root = _codeDemo.root;

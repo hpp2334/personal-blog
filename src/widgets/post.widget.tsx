@@ -10,6 +10,7 @@ import yaml from "yaml";
 import constate from "constate";
 // @ts-ignore
 import { githubLight } from "@codesandbox/sandpack-themes";
+import { decodeHTMLEntities } from "@/utils/common";
 
 export interface CodeDemo {
   codes: Array<{
@@ -68,7 +69,10 @@ function CommonToken({ token }: { token: marked.Token }) {
     case "escape":
     case "text":
     case "paragraph":
-      return <>{token.text}</>;
+      const t = decodeHTMLEntities(token.text);
+      return <>{t}</>;
+    case "br":
+      return <br />;
     case "strong":
       return <Strong token={token} />;
     case "codespan":
@@ -155,7 +159,14 @@ function Link({ token }: { token: marked.Tokens.Link }) {
 }
 
 function Image({ token }: { token: marked.Tokens.Image }) {
-  return <img width={600} src={token.href} alt={token.title} />;
+  return (
+    <img
+      className={styles.image}
+      width={600}
+      src={token.href}
+      alt={token.title}
+    />
+  );
 }
 
 function WrapperSandpack({ entryKey }: { entryKey: string }) {
@@ -190,6 +201,22 @@ function Code({ token }: { token: marked.Tokens.Code }) {
   if (token.lang === "yaml:codeDemo") {
     const { key } = yaml.parse(token.text);
     return <WrapperSandpack entryKey={key} />;
+  }
+  if (token.lang === "yaml:codeSandbox") {
+    const { url, height } = yaml.parse(token.text);
+    console.log(url, height);
+    return (
+      <iframe
+        height={height}
+        style={{ width: "100%" }}
+        scrolling="no"
+        title="React 16.4 Lifecycle Simple Demo"
+        src={`${url}?theme-id=light&default-tab=js,result`}
+        frameBorder="no"
+        allowTransparency={true}
+        allowFullScreen={true}
+      ></iframe>
+    );
   }
   return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
 }

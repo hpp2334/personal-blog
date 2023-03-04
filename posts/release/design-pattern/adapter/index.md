@@ -11,7 +11,7 @@ series: "design-pattern"
 <Reference
 entries={[
 ["适配器模式", "https://refactoringguru.cn/design-patterns/adapter"],
-["精读《设计模式 - Adapter 适配器模式》", "https://zhuanlan.zhihu.com/p/280733597"]
+["精读《设计模式 -v Adapter 适配器模式》", "https://zhuanlan.zhihu.com/p/280733597"]
 ]}
 />
 

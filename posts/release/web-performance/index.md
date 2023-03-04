@@ -1,16 +1,3 @@
----
-date: "2022-02-23"
-title: "前端性能指标与优化方法"
-tags: ["fe"]
-abstract: "本文简述前端性能指标与常用的优化方法"
-requirements: []
-references:
-  [
-    ["web.dev", "https://web.dev/"],
-    ["User-centric performance metrics", "https://web.dev/user-centric-performance-metrics/#in-the-lab"],
-  ]
----
-
 ## 前言
 
 本文将简要地介绍前端性能指标与常用的优化方法，更多细节请读者自行根据关键字 Google。

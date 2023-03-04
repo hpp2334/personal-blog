@@ -1,0 +1,26 @@
+date: "2021-04-06"
+title: "React Fiber 树构建与更新简析"
+tags: ["fe", "react", "source"]
+abstract: "本文从源码角度简析了 React Fiber 树构建与更新逻辑。"
+requirements:
+  [
+    "使用过 React",
+    "了解 React Fiber 结构与 diff 算法",
+    "了解 React Scheduler",
+    "熟悉数据结构 - 树",
+  ]
+series: "react-analysis"
+environment: [["React", "17"]]
+references:
+  [
+    [
+      "React技术揭秘 - 架构篇",
+      "https://react.iamkasong.com/process/reconciler.html",
+    ],
+    [
+      "ReactFiber节点的更新入口：beginWork",
+      "https://www.neroht.com/article-detail/23",
+    ],
+    ["完全理解React的completeWork", "https://www.neroht.com/article-detail/26"],
+    ["React源码 commit阶段详解", "https://www.neroht.com/article-detail/32"],
+  ]

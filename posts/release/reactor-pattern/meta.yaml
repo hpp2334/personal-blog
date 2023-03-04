@@ -1,0 +1,21 @@
+date: "2022-02-17"
+title: "浅谈 Reactor I/O 模式"
+tags: ["backend", "rust"]
+abstract: "本文阐述了 Reactor 线程池模式的原理与要点，实现了一个基于 Rust 的 TCP echo server Demo。"
+requirements: []
+references:
+  [
+    [
+      "Understanding Reactor Pattern for Highly Scalable I/O Bound Web Server",
+      "https://tianpan.co/blog/2015-01-13-understanding-reactor-pattern-for-highly-scalable-i-o-bound-web-server",
+    ],
+    [
+      "The Reactor-Executor Pattern",
+      "https://cfsamsonbooks.gitbook.io/epoll-kqueue-iocp-explained/appendix-1/reactor-executor-pattern",
+    ],
+    ["Java NIO 浅析", "https://tech.meituan.com/2016/11/04/nio.html"],
+    [
+      "高性能 IO 模型分析-Reactor 模式和 Proactor 模式（二）",
+      "https://zhuanlan.zhihu.com/p/95662364",
+    ],
+  ]

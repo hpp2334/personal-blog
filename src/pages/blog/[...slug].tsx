@@ -108,7 +108,7 @@ function PostHeader({ meta }: { meta: PostMeta }) {
           <div className={classNames(styles.environments)}>
             <div className={styles.title}>environments</div>
             {meta.environment.map(([e, v], idx) => (
-              <div>
+              <div key={idx}>
                 {e}: {v}
               </div>
             ))}
