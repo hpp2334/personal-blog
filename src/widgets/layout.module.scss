@@ -21,3 +21,8 @@
     position: relative;
   }
 }
+
+.bgMask {
+  @include website-bg;
+  bottom: 0;
+}

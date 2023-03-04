@@ -25,6 +25,11 @@ export default function App({ Component, pageProps }: AppProps) {
           height: 100vh;
         }
 
+        a {
+          text-decoration: none;
+          color: black;
+        }
+
         #__next {
           max-height: 100%;
         }

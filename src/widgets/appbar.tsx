@@ -13,11 +13,6 @@ const config = [
     to: "/",
   },
   {
-    label: "Projects",
-    test: (p: string) => p.startsWith("/projects"),
-    to: "/projects",
-  },
-  {
     label: "Materials",
     test: (p: string) => p.startsWith("/materials"),
     to: "/materials",
