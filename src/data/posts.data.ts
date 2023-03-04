@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs/promises";
 import { existsSync } from "fs";
-import { Post, PostMeta } from "@/core/post.core";
+import { CodeDemoEntry, Post, PostMeta } from "@/core/post.core";
 import yaml from "yaml";
 
 const POSTS_DRAFT_DIR = path.resolve(process.cwd(), "./posts/draft");
@@ -28,6 +28,30 @@ async function parseMeta(
     ret.references ??= [];
     ret.tags ??= [];
     ret.environment ??= [];
+    if (ret.codeDemo) {
+      const _codeDemo = ret.codeDemo;
+      const root = _codeDemo.root;
+      const _codes = _codeDemo.codes;
+      const codes: Array<CodeDemoEntry> = [];
+      for (const code of _codes) {
+        const entry: CodeDemoEntry = {
+          ...code,
+          files: [],
+        };
+        for (const filePath of code.files) {
+          entry.files.push({
+            path: filePath,
+            data: await fs.readFile(
+              path.join(postDir, root, code.path, filePath),
+              "utf-8"
+            ),
+          });
+        }
+        codes.push(entry);
+      }
+      ret.codes = codes;
+      delete ret.codeDemo;
+    }
   }
   return ret;
 }

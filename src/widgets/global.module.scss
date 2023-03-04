@@ -7,7 +7,7 @@ $text-color-light: rgb(136, 136, 136);
 
 $website-bg-color: lighten($primary-color, 46);
 
-$max-small-screen-width: 768px;
+$max-small-screen-width: 900px;
 
 @mixin website-bg {
   position: absolute;

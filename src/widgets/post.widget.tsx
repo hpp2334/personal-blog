@@ -1,5 +1,5 @@
 import { marked } from "marked";
-import React from "react";
+import React, { useMemo } from "react";
 import NextLink from "next/link";
 import NextImage from "next/image";
 import styles from "./post.module.scss";
@@ -7,14 +7,53 @@ import classnames from "classnames";
 import { Highlighter } from "./code.widget";
 import dynamic from "next/dynamic";
 import yaml from "yaml";
+import constate from "constate";
+// @ts-ignore
+import { githubLight } from "@codesandbox/sandpack-themes";
 
-export interface PostContentWidgetProps {
-  tokens: marked.TokensList;
+export interface CodeDemo {
+  codes: Array<{
+    key: string;
+    path: string;
+    entry: string;
+    files: Array<{
+      path: string;
+      data: string;
+    }>;
+    template: string;
+  }>;
 }
 
 const Stackblitz = dynamic(() =>
   import("./stackblitz.widget").then((v) => v.Stackblitz)
 );
+const Sandpack = dynamic(() =>
+  import("@codesandbox/sandpack-react").then((v) => v.Sandpack)
+);
+
+function usePost({
+  rawStr,
+  codeDemo,
+}: {
+  rawStr: string;
+  codeDemo?: CodeDemo;
+}) {
+  const tokens = useMemo(() => {
+    const lexer = new marked.Lexer();
+    return lexer.lex(rawStr);
+  }, [rawStr]);
+
+  const codeDemoMap = useMemo(() => {
+    const list = codeDemo?.codes.map((t) => [t.key, t] as const) ?? [];
+    return new Map(list);
+  }, [codeDemo]);
+
+  return {
+    tokens,
+    codeDemoMap,
+  };
+}
+export const [PostProvider, usePostContext] = constate(usePost);
 
 function CommonToken({ token }: { token: marked.Token }) {
   if (
@@ -119,10 +158,38 @@ function Image({ token }: { token: marked.Tokens.Image }) {
   return <img width={600} src={token.href} alt={token.title} />;
 }
 
+function WrapperSandpack({ entryKey }: { entryKey: string }) {
+  const { codeDemoMap } = usePostContext();
+  const codeDemo = codeDemoMap.get(entryKey);
+
+  if (!codeDemo) {
+    return null;
+  }
+
+  return (
+    <div className={styles.wrapperSandpack}>
+      <Sandpack
+        theme={githubLight}
+        template={codeDemo.template as any}
+        customSetup={{
+          entry: codeDemo.entry,
+        }}
+        files={Object.fromEntries(
+          codeDemo.files.map((t) => [t.path, t.data] as const)
+        )}
+      />
+    </div>
+  );
+}
+
 function Code({ token }: { token: marked.Tokens.Code }) {
   if (token.lang === "yaml:stackblitz") {
     const obj = yaml.parse(token.text);
     return <Stackblitz {...obj} />;
+  }
+  if (token.lang === "yaml:codeDemo") {
+    const { key } = yaml.parse(token.text);
+    return <WrapperSandpack entryKey={key} />;
   }
   return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
 }
@@ -135,7 +202,9 @@ function BlockQuote({ token }: { token: marked.Tokens.Blockquote }) {
   );
 }
 
-export function PostContentWidget({ tokens }: PostContentWidgetProps) {
+export function PostContentWidget() {
+  const { tokens } = usePostContext();
+
   return (
     <div className={styles.post}>
       {tokens.map((token, index) => (

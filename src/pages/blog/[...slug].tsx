@@ -7,7 +7,7 @@ import { getPostHref, Post, PostMeta, TAGS } from "@/core/post.core";
 import { marked } from "marked";
 import constate from "constate";
 import React, { useMemo } from "react";
-import { PostContentWidget } from "@/widgets/post.widget";
+import { PostContentWidget, PostProvider } from "@/widgets/post.widget";
 import styles from "./slug.module.scss";
 import { fmtDate } from "@/utils/common";
 import classNames from "classnames";
@@ -63,22 +63,8 @@ export const getStaticProps: GetStaticProps<Props, UrlQuery> = async (
   };
 };
 
-function usePost({ rawStr }: { rawStr: string }) {
-  const tokens = useMemo(() => {
-    const lexer = new marked.Lexer();
-    return lexer.lex(rawStr);
-  }, [rawStr]);
-
-  return {
-    tokens,
-  };
-}
-const [PostProvider, usePostContext] = constate(usePost);
-
 function PostContent() {
-  const { tokens } = usePostContext();
-
-  return <PostContentWidget tokens={tokens} />;
+  return <PostContentWidget />;
 }
 
 function PostHeader({ meta }: { meta: PostMeta }) {
@@ -146,7 +132,10 @@ export default function PostDetail({ post }: Props) {
       <FullscreenScrollable>
         <div className={styles.mask} />
         <AppBar />
-        <PostProvider rawStr={post.rawStr}>
+        <PostProvider
+          rawStr={post.rawStr}
+          codeDemo={{ codes: post.meta.codes }}
+        >
           <main className={styles.slug}>
             <Layout>
               <PostHeader meta={post.meta} />

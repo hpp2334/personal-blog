@@ -38,6 +38,17 @@ export const TAGS: Record<string, TagInfo | undefined> = {
   },
 };
 
+export interface CodeDemoEntry {
+  key: string;
+  path: string;
+  entry: string;
+  files: Array<{
+    path: string;
+    data: string;
+  }>;
+  template: string;
+}
+
 export interface PostMeta {
   date: number;
   title: string;
@@ -48,6 +59,7 @@ export interface PostMeta {
   references: Array<[string, string]>;
   tags: string[];
   environment: Array<[string, string]>;
+  codes: CodeDemoEntry[];
 }
 
 export interface Post {

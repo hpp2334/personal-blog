@@ -1,8 +1,23 @@
 .typewriter-root {
   @mixin keyboard($position: 0, $value: 0) {
-    $keys: map-merge((0: '0', 1: '0', 2: '0', 3: '0', 4: '0', 5: '0', 6: '10px', 7: '10px', 8: '10px', 9: '10px'), ($position: $value));
-    box-shadow:
-      15px #{map-get($keys, 0)} 0 var(--key),
+    $keys: map-merge(
+      (
+        0: "0",
+        1: "0",
+        2: "0",
+        3: "0",
+        4: "0",
+        5: "0",
+        6: "10px",
+        7: "10px",
+        8: "10px",
+        9: "10px",
+      ),
+      (
+        $position: $value,
+      )
+    );
+    box-shadow: 15px #{map-get($keys, 0)} 0 var(--key),
       30px #{map-get($keys, 1)} 0 var(--key),
       45px #{map-get($keys, 2)} 0 var(--key),
       60px #{map-get($keys, 3)} 0 var(--key),
@@ -20,9 +35,9 @@
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  --blue: #5C86FF;
-  --blue-dark: #275EFE;
-  --orange: #FBC56C;
+  --blue: #5c86ff;
+  --blue-dark: #275efe;
+  --orange: #fbc56c;
   --duration: 3s;
   --key: white;
 
@@ -109,7 +124,7 @@
       $wordline-thickness: 5px;
       $wordline-gap: 14px;
       $wordline-color: rgb(197, 197, 197);
-  
+
       position: absolute;
       left: $paper-width * 0.2;
       top: 0;
@@ -120,7 +135,7 @@
       overflow: hidden;
 
       animation: paper var(--duration) linear 0s infinite normal none;
-  
+
       &::before {
         position: absolute;
         content: "";
@@ -131,25 +146,24 @@
         background-color: $wordline-color;
         border-radius: 2px;
         // overflow: hidden;
-        box-shadow:
-          0px #{$wordline-gap} #{$wordline-color},
+        box-shadow: 0px #{$wordline-gap} #{$wordline-color},
           0px #{2 * $wordline-gap} #{$wordline-color},
           0px #{3 * $wordline-gap} #{$wordline-color},
           0px #{4 * $wordline-gap} #{$wordline-color};
       }
     }
-  
+
     .typewriter__keyboard {
       $keyboard-width: 120px;
       $keyboard-height: 60px;
       $keyboard-bg: linear-gradient(135deg, var(--blue), var(--blue-dark));
-  
+
       width: $keyboard-width;
       height: $keyboard-height;
       position: relative;
       z-index: 1;
       perspective: 200px;
-    
+
       &::before {
         content: "";
         position: absolute;
@@ -169,7 +183,7 @@
         width: $keyboard-width * 0.1;
         height: $keyboard-height * 0.1;
         border-radius: 2px;
-        
+
         @include keyboard;
         animation: keyboard var(--duration) linear infinite;
       }
@@ -179,13 +193,13 @@
       85%,
       92%,
       100% {
-          transform: translateY(0);
+        transform: translateY(0);
       }
       89% {
-          transform: translateY(-4px);
+        transform: translateY(-4px);
       }
       95% {
-          transform: translateY(2px);
+        transform: translateY(2px);
       }
     }
 
@@ -193,16 +207,20 @@
       5% {
         transform: translateX(0);
       }
-      15%, 30% {
+      15%,
+      30% {
         transform: translateX(-#{$slide-width * 0.2});
       }
-      40%, 55% {
+      40%,
+      55% {
         transform: translateX(-#{$slide-width * 0.3});
       }
-      65%, 70% {
+      65%,
+      70% {
         transform: translateX(-#{$slide-width * 0.5});
       }
-      80%, 89% {
+      80%,
+      89% {
         transform: translateX(-#{$slide-width * 0.8});
       }
       100% {
@@ -214,25 +232,39 @@
       // 5% {
       //   transform: translateY(46px);
       // }
-      20%, 30% {
+      20%,
+      30% {
         transform: translateY(-12px);
       }
-      40%, 55% {
+      40%,
+      55% {
         transform: translateY(-22px);
       }
-      65%, 70% {
+      65%,
+      70% {
         transform: translateY(-32px);
       }
-      80%, 85% {
+      80%,
+      85% {
         transform: translateY(-40px);
       }
-      92%, 100% {
+      92%,
+      100% {
         transform: translateY(0);
       }
     }
 
     @keyframes keyboard {
-      5%, 12%, 21%, 30%, 39%, 48%, 57%, 66%, 75%, 84% {
+      5%,
+      12%,
+      21%,
+      30%,
+      39%,
+      48%,
+      57%,
+      66%,
+      75%,
+      84% {
         @include keyboard;
       }
       9% {
