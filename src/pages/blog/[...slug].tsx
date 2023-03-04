@@ -88,6 +88,7 @@ function PostHeader({ meta }: { meta: PostMeta }) {
                 key={idx}
                 href={href}
                 target="_blank"
+                rel="noreferrer"
                 className={styles.reference}
               >
                 <div className={styles.text}>{t}</div>
