@@ -48,6 +48,18 @@ export const TAGS: Record<string, TagInfo | undefined> = {
       cn: "C++",
     },
   },
+  css: {
+    name: {
+      en: "CSS",
+      cn: "CSS",
+    },
+  },
+  webpack: {
+    name: {
+      en: "Webpack",
+      cn: "Webpack",
+    },
+  },
 };
 
 export interface CodeDemoEntry {
