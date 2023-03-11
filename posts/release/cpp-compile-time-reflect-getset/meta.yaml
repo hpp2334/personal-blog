@@ -1,0 +1,6 @@
+date: "2023-3-9"
+title: "C++ 编译期反射读写"
+tags: ["cpp"]
+abstract: "本文通过学习 refl-cpp 的实现，从零开始实现支持编译期读写属性的简单反射库。"
+references: [["refl-cpp", "https://github.com/veselink1/refl-cpp"]]
+environment: [["C++", "C++20"]]
