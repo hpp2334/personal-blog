@@ -1,0 +1,13 @@
+date: "2023-8-4"
+title: "Tokio Slab 库"
+tags: ["rust", "cpp", "performance"]
+abstract: "本文通过参考 Tokio Slab 库的实现，实现了一个分页的 Slab 内存分配器"
+references:
+  [
+    ["slab", "https://github.com/tokio-rs/slab"],
+    [
+      "The price of dynamic memory: Allocation",
+      "https://johnnysswlab.com/the-price-of-dynamic-memory-allocation/",
+    ],
+  ]
+environment: [["C++", "C++17"]]

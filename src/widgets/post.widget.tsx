@@ -86,6 +86,8 @@ function CommonToken({ token }: { token: marked.Token }) {
       return <Link token={token} />;
     case "image":
       return <Image token={token} />;
+    case "list":
+      return <List token={token} />;
   }
   return null;
 }
