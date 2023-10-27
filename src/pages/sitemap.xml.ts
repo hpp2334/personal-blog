@@ -1,30 +1,43 @@
 import { WebsiteMeta } from "@/core/meta.core";
 import { PostMeta } from "@/core/post.core";
-import { getPosts, getPostsSlug } from "@/data/posts.data";
+import { getPosts, mapPostSlug } from "@/data/posts.data";
+import { fmtDate } from "@/utils/common";
 import { GetServerSideProps } from "next";
 
 function generateSiteMap(posts: Array<PostMeta>) {
-  const slugs = getPostsSlug(posts)
+  const infos = posts.map(post => {
+    return {
+      ...mapPostSlug(post),
+      date: post.date,
+    }
+  })
     .filter((t) => !t.draft)
-    .map((t) => t.slug);
+    .map((t) => ({
+      slug: t.slug,
+      date: fmtDate(t.date, "YYYY-MM-DD"),
+    }));
+  const currentDate = fmtDate(Date.now(), "YYYY-MM-DD")
 
   return `<?xml version="1.0" encoding="UTF-8"?>
      <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
        <!--We manually set the two URLs we know already-->
        <url>
          <loc>https://${WebsiteMeta.host}</loc>
+         <lastmod>${currentDate}</lastmod>
        </url>
        <url>
          <loc>https://${WebsiteMeta.host}/materials</loc>
+         <lastmod>${currentDate}</lastmod>
        </url>
-       ${slugs
-         .map((slug) => {
-           return `<url>
+       ${infos
+      .map(({ slug, date }) => {
+        return `<url>
          <loc>https://${`${WebsiteMeta.host}/blog/${slug}`}</loc>
+         <lastmod>${date}</lastmod>
        </url>
        `;
-         })
-         .join("")}
+      })
+      .join("")}
       </urlset>
    `;
 }

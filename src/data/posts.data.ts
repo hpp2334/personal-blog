@@ -99,15 +99,17 @@ export async function getPosts(): Promise<PostMeta[]> {
   return metas;
 }
 
+export function mapPostSlug(meta: PostMeta) {
+  const slug = meta.path.split("/").filter(Boolean);
+  const draft = meta.draft ? "1" : undefined;
+  return {
+    slug,
+    draft,
+  };
+}
+
 export function getPostsSlug(metas: PostMeta[]) {
-  return metas.map((meta) => {
-    const slug = meta.path.split("/").filter(Boolean);
-    const draft = meta.draft ? "1" : undefined;
-    return {
-      slug,
-      draft,
-    };
-  });
+  return metas.map(mapPostSlug);
 }
 
 export async function getPost(

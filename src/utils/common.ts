@@ -10,12 +10,12 @@ export function fmtDate(timestamp: number, fmt: string) {
   const ss = date.getSeconds();
 
   const ret = fmt
-    .replaceAll("YYYY", YYYY.toString())
-    .replaceAll("MM", MM.toString())
-    .replaceAll("DD", DD.toString())
-    .replaceAll("hh", hh.toString())
-    .replaceAll("mm", mm.toString())
-    .replaceAll("ss", ss.toString());
+    .replaceAll("YYYY", YYYY.toString().padStart(4, '0'))
+    .replaceAll("MM", MM.toString().padStart(2, '0'))
+    .replaceAll("DD", DD.toString().padStart(2, '0'))
+    .replaceAll("hh", hh.toString().padStart(2, '0'))
+    .replaceAll("mm", mm.toString().padStart(2, '0'))
+    .replaceAll("ss", ss.toString().padStart(2, '0'));
   return ret;
 }
 
