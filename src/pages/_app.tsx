@@ -1,12 +1,28 @@
 import type { AppProps } from "next/app";
-import { Noto_Sans } from "@next/font/google";
+import { Noto_Sans } from "next/font/google";
+import { useEffect } from "react";
 
 const noto = Noto_Sans({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
 });
 
+function unregisterPWA() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+      for (const registration of registrations) {
+        registration.unregister()
+      }
+    })
+  }
+}
+
 export default function App({ Component, pageProps }: AppProps) {
+  // https://github.com/shadowwalker/next-pwa/issues/315
+  useEffect(() => {
+    unregisterPWA()
+  }, [])
+
   return (
     <>
       <style jsx global>{`
