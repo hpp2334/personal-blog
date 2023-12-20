@@ -1,3 +1,4 @@
+import 'katex/dist/katex.min.css';
 import { marked } from "marked";
 import React, { useMemo } from "react";
 import NextLink from "next/link";
@@ -11,6 +12,8 @@ import constate from "constate";
 // @ts-ignore
 import { githubLight } from "@codesandbox/sandpack-themes";
 import { decodeHTMLEntities } from "@/utils/common";
+import 'katex/dist/katex.min.css';
+import { InlineMath, BlockMath } from 'react-katex';
 
 export interface CodeDemo {
   codes: Array<{
@@ -76,6 +79,9 @@ function CommonToken({ token }: { token: marked.Token }) {
     case "strong":
       return <Strong token={token} />;
     case "codespan":
+      if (token.text.startsWith("$$") && token.text.endsWith("$$")) {
+        return <InlineMath math={token.text.slice(2, -2)} />
+      }
       return (
         <code
           className={styles.codespan}
@@ -162,12 +168,14 @@ function Link({ token }: { token: marked.Tokens.Link }) {
 
 function Image({ token }: { token: marked.Tokens.Image }) {
   return (
-    <img
-      className={styles.image}
-      width={600}
-      src={token.href}
-      alt={token.title}
-    />
+    <span className={styles.imageContainer}>
+      <NextImage
+        className={styles.image}
+        fill={true}
+        src={token.href}
+        alt={token.title}
+      />
+    </span>
   );
 }
 
@@ -215,6 +223,9 @@ function Code({ token }: { token: marked.Tokens.Code }) {
         allowFullScreen={true}
       ></iframe>
     );
+  }
+  if (token.lang === "math") {
+    return <BlockMath math={token.text} />
   }
   return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
 }

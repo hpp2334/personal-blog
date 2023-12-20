@@ -75,10 +75,16 @@
   }
 
   .image {
-    max-width: 100%;
+    object-fit: contain;
   }
 
   .wrapperSandpack {
     margin: 10px 0;
+  }
+
+  .imageContainer {
+    display: block;
+    position: relative;
+    height: 300px;
   }
 }

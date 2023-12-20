@@ -1,5 +1,5 @@
 date: "2022-03-17"
-title: "从库学 Rust - miniminiserde"
+title: "从 Rust 库学 - miniminiserde"
 tags: ["rust"]
 abstract: "本文实现了一个简化版本的 miniserde。"
 requirements: ["使用过 serde"]
