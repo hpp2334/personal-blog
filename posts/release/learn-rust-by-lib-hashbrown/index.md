@@ -1,14 +1,14 @@
-## 前言
+# 前言
 
 [hashbrown](https://github.com/rust-lang/hashbrown) 是 SwissTable 的 Rust 实现，而 SwissTable 是 Google 在 [CppCon 2017](https://www.youtube.com/watch?v=ncHmEUmJZf4) 上公开的一种更快的 HashTable。从 Rust 1.36 开始（2023.12.04 Rust stable 版本为 1.74.1），hashbrown 为 Rust `HashMap`/`HashSet` 的默认实现。
 
 最近笔者研究 hashbrown 库出于以下的两件事情。
 
-### `Arc<Mutex<HashMap<U, V>>>`
+## `Arc<Mutex<HashMap<U, V>>>`
 
 在多线程并发下，经常会用到 `Arc<Mutex<HashMap<U, V>>>`，但这意味着每次读写 hashmap 都需要锁 mutex，对性能影响比较大。这个问题实际上是 **实现高效的多线程并发 HashMap**，有库 [dashmap](https://github.com/xacrimon/dashmap) 实现了这一数据结构，笔者后面再单独研究后写文章来阐述。
 
-### C++ 标准库 `unordered_map` 慢
+## C++ 标准库 `unordered_map` 慢
 
 最近工作中的 C++ 项目跑 benchmark 发现 `unordered_map` 的 `find` 操作特别慢。而由于该业务处的 hashmap 比较稀疏，因此加了一段代码用来快速排除 `find` 结果。这个问题向外拓展是 **有没有什么实现的比较快 HashMap**。
 
@@ -31,7 +31,7 @@ V* QuickHashTable::find(U& u) {
 ```
 
 
-## AHash
+# AHash
 
 由于介绍的是 HashTable，首先需要搞明白 **如何衡量一个 hash 函数**。一个 hash 函数可以通过以下方面衡量：
 
@@ -68,9 +68,9 @@ impl AHasher {
 }
 ```
 
-## 一些前置知识
+# 一些前置知识
 
-### 三角数 mod `$$2^n$$`
+## 三角数 mod `$$2^n$$`
 
 hashbrown 内部用的不是 拉链法，而是 基于 [三角数](https://zh.wikipedia.org/zh-hans/%E4%B8%89%E8%A7%92%E5%BD%A2%E6%95%B8) （杨辉三角每一行的中间数）的探测法。
 
@@ -150,9 +150,9 @@ f(2^n, 2^n-1-k) &= T_{2^n-1-k} \mod 2^n \\
 所以 `$$f(2^n, 2^n-1-k)$$` 与 `$$f(2^n, k)$$` 在同余下相差 `$$2^{n-1}$$`。当 `$$k$$` 从 `$$1$$` 到 `$$2^{n}$$` 时 `$$f(2^n, k)$$` 包含了 `$$0$$` 至 `$$2^{n-1}-1$$` 的一个排列以及 `$$2^{n-1}$$` 至 `$$2^n-1$$` 的一个排列，正好是 `$$0$$` 至 `$$2^n-1$$` 的一个排列。
 
 
-### 一些通用的位运算
+## 一些通用的位运算
 
-#### 删掉最后一位 1
+### 删掉最后一位 1
 
 ```rs
 x & (x - 1)
@@ -160,17 +160,17 @@ x & (x - 1)
 
 很好理解，将 x 表述为 `...10000...000`，x - 1 为 `...01111...111`，相与最后 1 位变为 0。  
 
-#### 最后一位 1 的位置
+### 最后一位 1 的位置
 
 本质上是个二分算法，但直接用 `trailing_zeros` 计算（C++ 用 `__builtin_ctz`），编译器可能会翻译为 CPU 指令，性能会高出很多。  
 
-### hashbrown 中的一些位运算
+## hashbrown 中的一些位运算
 
 由于还没有介绍 hashbrown 的原理，笔者这里换一种方式介绍背景。
 
 现在有一个 `u8` 的数组，其中的值只可能是 `0x80`, `0x8f` 或 `0x00` 至 `0x7f` 中的任何数。我们可能从数组的任意位置视为 `u32` 将数据读出来做运算。
 
-#### 将 `0x80`, `0xff` 转为 `0x80`，剩下的转为 `0x00`
+### 将 `0x80`, `0xff` 转为 `0x80`，剩下的转为 `0x00`
 
 直接和 `0x80808080` 相与。
 
@@ -178,7 +178,7 @@ x & (x - 1)
 x & u32::from_ne_bytes(0x80)
 ```
 
-#### 将 `0xff` 转为 `0x80`，剩下的转为 `0x00`
+### 将 `0xff` 转为 `0x80`，剩下的转为 `0x00`
 
 实际上是判断最高位和次高位为 1。让自己与自己左移一位相与，再与 `0x80`，结果为 `0x80` 说明最高位和次高位都为 1。
 
@@ -186,7 +186,7 @@ x & u32::from_ne_bytes(0x80)
 x & (x << 1) & u32::from_ne_bytes(0x80) 
 ```
 
-#### 将指定的 y 转为 `0x80`，剩下的转为 `0x00`
+### 将指定的 y 转为 `0x80`，剩下的转为 `0x00`
 
 操作 `(t - 1) & ~t` 能得到取最低位 1 再减 1 的结果，当 `t = 0` 时结果为 `0xff`，是唯一能让最高位为 1 的值。所以先异或 `x`，再应用这个操作，最后直接与 `0x80`。
 
@@ -195,9 +195,9 @@ let z = x ^ u32::from_ne_bytes(y);
 z.wrapping_sub(repeat(0x01)) & !z & repeat(0x80)
 ```
 
-## hashbrown 的工作原理
+# hashbrown 的工作原理
 
-### 内存布局
+## 内存布局
 
 ![Memory Layout](/learn-rust-by-lib-hashbrown/memory_layout.png)
 
@@ -209,7 +209,7 @@ z.wrapping_sub(repeat(0x01)) & !z & repeat(0x80)
 
 这里的 `n` 一定是 2 的幂。
 
-### h1, h2 函数
+## h1, h2 函数
 
 hashbrown 中定义了 `h1`, `h2` 函数：
 
@@ -224,9 +224,9 @@ hashbrown 中定义了 `h1`, `h2` 函数：
 
 顺带一提，这里和 SwissTable 的定义不太一样，SwissTable 定义了 `h1` 是高 57 位，`h2` 是低 7 位，和 hashbrown 刚好反过来。  
 
-### Control Bits
+## Control Bits
 
-数据位是 hashbrown 中用于快速检索的设计，有三种状态：
+控制位是 hashbrown 中用于快速检索的设计，有三种状态：
 
 - EMPTY: 代表空，值为 `0xff`  
 - DELETE: 代表被删除，值为 `0x80`  
@@ -236,5 +236,4 @@ hashbrown 中定义了 `h1`, `h2` 函数：
 
 ![Control Bits & Group](/learn-rust-by-lib-hashbrown/control_bits_group.png)
 
-
-
+控制位结尾多出来的 `Group::WIDTH` 个字节与前 `Group::WIDTH` 字节对应，具体的，`$$CT_i = CT_{i-n} (i \ge n)$$`。这样的设计是为了 `Group` 查询时不越界，能够与周期的方式查询。

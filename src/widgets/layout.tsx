@@ -1,3 +1,4 @@
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { AppBar, AppBarMenuMask } from "./appbar";
 import styles from "./layout.module.scss";
 
@@ -9,13 +10,34 @@ export function Layout({ children }: React.PropsWithChildren<{}>) {
   );
 }
 
+const scrollContext = createContext(0)
+
+export function useGlobalScroll() {
+  return useContext(scrollContext)
+}
+
 export function FullscreenScrollable({
   children,
 }: React.PropsWithChildren<{}>) {
+  const [scrollTop, setScrollTop] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setScrollTop(containerRef.current?.scrollTop ?? 0)
+  }, [])
+
   return (
-    <div className={styles.fullscreenScrollable}>
-      <div className={styles.internal}>{children}</div>
-    </div>
+    <scrollContext.Provider value={scrollTop}>
+      <div
+        className={styles.fullscreenScrollable}
+        ref={containerRef}
+        onScroll={(ev) => {
+          setScrollTop(ev.currentTarget.scrollTop);
+        }}
+      >
+        <div className={styles.internal}>{children}</div>
+      </div>
+    </scrollContext.Provider>
   );
 }
 

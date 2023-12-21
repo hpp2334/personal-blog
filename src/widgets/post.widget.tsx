@@ -1,6 +1,6 @@
 import 'katex/dist/katex.min.css';
 import { marked } from "marked";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import NextLink from "next/link";
 import NextImage from "next/image";
 import styles from "./post.module.scss";
@@ -14,6 +14,7 @@ import { githubLight } from "@codesandbox/sandpack-themes";
 import { decodeHTMLEntities } from "@/utils/common";
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
+import { useGlobalScroll } from './layout';
 
 export interface CodeDemo {
   codes: Array<{
@@ -173,7 +174,7 @@ function Image({ token }: { token: marked.Tokens.Image }) {
         className={styles.image}
         fill={true}
         src={token.href}
-        alt={token.title}
+        alt={token.href}
       />
     </span>
   );
@@ -238,11 +239,109 @@ function BlockQuote({ token }: { token: marked.Tokens.Blockquote }) {
   );
 }
 
+function TocItem({
+  token,
+  depth,
+  active,
+  nativeElement,
+}: {
+  token: marked.Tokens.Heading,
+  depth: 1 | 2 | 3,
+  active: boolean,
+  nativeElement: Element | null
+}) {
+  return (
+    <div
+      className={classnames(styles[`tocH${depth}`], active && styles.tocItemActive)}
+      onClick={() => {
+        nativeElement?.scrollIntoView({ behavior: 'smooth' })
+      }}>
+      <CommonToken token={token} />
+    </div>
+  )
+}
+
+function Toc({
+  tokens
+}: {
+  tokens: marked.TokensList
+}) {
+  const [effected, setEffected] = useState(false)
+  const scrollTop = useGlobalScroll()
+  const headings = useMemo(() => tokens.filter(token => token.type === 'heading' && token.depth <= 3).map(token => {
+    if (token.type !== 'heading') {
+      throw "Internal Error"
+    }
+    return {
+      depth: token.depth as 1 | 2 | 3,
+      token,
+    }
+  }), [tokens])
+
+  const nativeElements = useMemo(() => {
+    if (typeof document === 'undefined') {
+      return [];
+    }
+
+    const els: Element[] = []
+    for (const el of document.querySelectorAll(`.${styles.heading}`)) {
+      if (["H1", "H2", "H3"].includes(el.tagName)) {
+        els.push(el)
+      }
+    }
+    return els
+  }, [effected, headings, typeof document === 'undefined', typeof location !== 'undefined' && location.href])
+
+  const activeIndex = useMemo(() => {
+    const infos: Array<{ top: number, bottom: number }> = []
+    for (const el of nativeElements) {
+      const rect = el.getBoundingClientRect()
+      infos.push({
+        top: rect.top,
+        bottom: rect.bottom,
+      })
+    }
+
+    if (infos.length === 0) {
+      return -1
+    }
+    if (infos[0].top >= 0) {
+      return 0
+    }
+    for (let i = 1; i < infos.length; i++) {
+      if (infos[i].top > 5) {
+        return i - 1;
+      }
+    }
+    return infos.length - 1
+  }, [nativeElements, scrollTop])
+
+  useEffect(() => {
+    setEffected(true)
+  }, [])
+
+  // blue background height
+  if (scrollTop < 310) {
+    return null
+  }
+
+  return (
+    <div className={classnames(styles.toc, styles.scroll)}>
+      {headings.map((heading, index) => {
+        return (
+          <TocItem key={index} token={heading.token} depth={heading.depth} active={activeIndex === index} nativeElement={nativeElements[index] ?? null} />
+        )
+      })}
+    </div>
+  )
+}
+
 export function PostContentWidget() {
   const { tokens } = usePostContext();
 
   return (
     <div className={styles.post}>
+      <Toc tokens={tokens} />
       {tokens.map((token, index) => (
         <React.Fragment key={index}>
           {(() => {
