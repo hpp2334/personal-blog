@@ -1,11 +1,12 @@
 date: "2023-12-10"
 title: "从 Rust 库学 - hashbrown"
 tags: ["rust"]
-abstract: "本文会首先阐述 hash 函数的特征，hashmap 算法的特征，再介绍 hashbrown 库的实现。"
+abstract: "本文会阐述 hash 函数的特征与 hashbrown 库的工作原理。"
 requirements: []
 series: "learn-rust-by-lib"
 references:
   [
     ["hashbrown - Github", "https://github.com/rust-lang/hashbrown"],
-    ["Comparison with other hashers", "https://github.com/tkaitchuck/aHash/blob/master/compare/readme.md#Quality"]
+    ["Comparison with other hashers", "https://github.com/tkaitchuck/aHash/blob/master/compare/readme.md#Quality"],
+    ["Swisstable, a Quick and Dirty Description", "https://faultlore.com/blah/hashbrown-tldr/"]
   ]

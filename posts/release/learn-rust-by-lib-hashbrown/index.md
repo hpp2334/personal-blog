@@ -207,7 +207,7 @@ z.wrapping_sub(repeat(0x01)) & !z & repeat(0x80)
 - Data: 存放真实数据，这里注意数据是逆序存放的  
 - Control Bits: 控制位，control offset 是控制位的起始位置，`$$CT_i$$` 与 `$$T_i$$` 对应，反映了 `$$T_i$$` 的特征，也反映了存在与否
 
-这里的 `n` 一定是 2 的幂。
+**这里的 `n` 一定是 2 的幂**。
 
 ## h1, h2 函数
 
@@ -226,14 +226,114 @@ hashbrown 中定义了 `h1`, `h2` 函数：
 
 ## Control Bits
 
-控制位是 hashbrown 中用于快速检索的设计，有三种状态：
+控制位段是 hashbrown 中用于快速检索的设计，有三种状态：
 
 - EMPTY: 代表空，值为 `0xff`  
 - DELETE: 代表被删除，值为 `0x80`  
 - FULL: 代表有值，值的范围为 `[0x00, 0x7f]`，由 `h2(x)` 计算得到  
 
-由于每个控制位占 1 个字节，所以可以在数据位段中将某一段视为 `u32`, `u64` 甚至 `u128` 进行查找。这一段在 hashbrown 里被称为 `Group`，`Group` 中的字节数记录在了 `Group::WIDTH` 上。有了 `Group` 加上上文介绍的位运算，能够根据需要过滤得到数据位中 FULL, DELETE, EMPTY 的位置。
+由于每个控制位占 1 个字节，所以可以在数据位段中将某一段视为 `u32`, `u64` 甚至 `u128` 进行查找。这一段在 hashbrown 里被称为 **Group**，Group 中的字节数记录在了 `Group::WIDTH` 上。有了 Group 加上上文介绍的位运算，能够根据需要过滤得到数据位中 FULL, DELETE, EMPTY 的位置。
 
 ![Control Bits & Group](/learn-rust-by-lib-hashbrown/control_bits_group.png)
 
-控制位结尾多出来的 `Group::WIDTH` 个字节与前 `Group::WIDTH` 字节对应，具体的，`$$CT_i = CT_{i-n} (i \ge n)$$`。这样的设计是为了 `Group` 查询时不越界，能够与周期的方式查询。
+控制位结尾多出来的 `Group::WIDTH` 个字节与前 `Group::WIDTH` 字节对应，具体的，`$$CT_i = CT_{i-n} (i \ge n)$$`。这样的设计是为了 Group 查询时以周期的方式查询。
+
+## 初始化
+
+假设要初始化大小为 `size`，类型为 `T = (K, V)` 的表，则：
+
+- 保证 `size` 一定是 2 的幂：  
+  - 计算 `h1(x) % size` 可以转为 `h1(x) & (size - 1)`，避免非常慢的取模运算  
+  - 需要利用 “三角形 mod $$2^n$$” 的结论  
+- 计算剩余容量，保证表中一定有至少 1 个 EMPTY 项：
+  - 若 `size < 8`，则剩余容量取 `size - 1`，保留 1 个 EMPTY 项  
+  - 若 `size >= 8`，则剩余容量取 `$$\dfrac{7}{8} \cdot size$$`，保留 12.5% 的 EMPTY 项，用于控制 load factor  
+- 计算内存布局并分配内存：  
+  - 计算 control 在内存的对齐大小
+  - 计算 control bit 的偏移
+
+从上面的操作可以知道 hashbrown 的一些特性：
+
+- `size` 一定是 2 的幂  
+- 表中一定有至少 1 个 EMPTY 项  
+
+这些特性在接下来的插入、删除等操作中会用到。  
+
+## 查找 `key`
+
+首先计算 `key` 在表中对应的开始探测位置 `pos` 与控制位：
+
+```
+pos = h1(key) % size
+h2_hash = h2(key)
+```
+
+这样在位置 `pos` 加载 Group。
+
+如果 Group 中找到了匹配项，那么返回 `value`。这个操作需要找到 Group 中与 `h2_hash` 相同的位，得到他们的位置，再把数据段中的真实数据取出来比较是否真的与 `key` 一致。
+
+如果 Group 中没有找到匹配项，那么：
+
+- **如果 Group 中存在 EMPTY 项，则直接返回不存在，这是没有找到匹配项的唯一终止条件**。  
+- 否则，按三角数偏移 pos 移动到下个 Group 继续查找。
+
+整个查找过程没有额外的终止条件，即查找过程要么找到 `key` 一致的项并返回 `value`，要么找到 EMPTY 返回不存在。这要求 **表里一定要存在 EMPTY 项**。
+
+## 插入 `(key, value)`
+
+按查找中相同的计算得到 `pos` 与 `h2_hash`，并加载 Group。
+
+如果在 Group 中找到了 `key` 匹配的项，那么替换掉 `value`。
+
+如果在 Group 中没有找到 `key` 匹配的项，那么移动到下个 Group 继续查找，直到 Group 内有一个 EMPTY 项。  
+
+如果在整个过程中都没有找到 `key` 匹配的项，那么插入的位置为所有加载过的 Group 中第一个为 EMPTY 或 DELETE 的项的位置，在这个位置上插入 `value`。
+
+## 删除 `key`
+
+执行查找 `key` 的操作找到对应的位置，然后标记为 DELETE 即可。
+
+但如果能够进一步标记为 EMPTY，那么可以为后续的 查找、插入、删除 提高性能。要标记为 EMPTY 就不能改变查询终止条件，即查询到 Group 时就需要终止，即任何包含 DELETE 的 Group 中都包含至少一个 EMPTY。这样的 EMPTY 必然至少有一个存在于 DELETE 的左侧，有一个存在于 DELETE 的右侧。
+
+![DELETE to EMPTY requirement 1](/learn-rust-by-lib-hashbrown/DELETE_to_EMPTY_requirement_1.png)
+
+我们把左侧的 DELETE 位置记为 `x`，对 Group 按左端点排序，显然 Group 左侧在 `x` 左侧的都覆盖到了，而右侧的 EMPTY 最远可以放在 `x + GROUP::WIDTH - 1` 来覆盖全部的 Group。这相当于要求 DELETE 的位置向左向右延生最多有非 EMPTY 元素 `GROUP::WIDTH - 1` 个。这样可以把前后两个 Group 加载出来，对 EMPTY 做与运算后统计前导与后导 0 的个数统计出来。
+
+![DELETE to EMPTY requirement 2](/learn-rust-by-lib-hashbrown/DELETE_to_EMPTY_requirement_2.png)
+
+特别的，如果 `n < Group::WIDTH`，根据上面的优化，表中一定不存在 DELETE。
+
+## 扩容、缩容
+
+hashbrown 中表的大小和容量实际上是不一致的。在表的大小超过 8 后，表的容量会按照表的大小的 `$$\dfrac{7}{8}$$` 计算，这是为了让表剩下至少 `$$\dfrac{1}{8}$$` 的 EMPTY 项。
+
+执行插入操作时，若剩余容量为 0，且正好剩下的 FULL 项超过了容量的 `$$\dfrac{1}{2}$$`，那么执行扩容操作：
+
+1. 构造新的表，新的容量取 `$$2^{\lceil\log_{2}\dfrac{8}{7} (capacity + 1)\rceil}$$`
+2. 遍历旧表的 FULL 项，计算出新的位置并写入控制位，再复制数据
+3. 最后记录新的表的已有大小与剩余容量
+
+缩容操作在 hashbrown 中并不会主动执行，需要使用者主动调用执行，其原理实际上就是扩容的原理，通过重新构造表实现。
+
+## Rehash
+
+执行插入操作时，若剩余容量为 0，且 FULL 项没有超过容量的 `$$\dfrac{1}{2}$$`，那么说明表中的 DELETE 项太多了，执行 rehash 操作。rehash 操作会将表中的 DELETE 改为 EMPTY，并移动 FULL 的位置使之满足 hashbrown 的要求，这可以提升查找性能。
+
+具体的：
+
+1. 预处理：在控制位段上，把 FULL 改为 DELETE，DELETE 改为 EMPTY  
+2. 顺序遍历 DELETE 位。假设当前位置为 `i`  
+    1.1. 重新计算 `i` 位置的数据的 hash 并照查找算法得到新的位置 `new_i`    
+    1.2. 若 `i` 与 `new_i` 不在以 hash 开头的同一个 Group 里  
+
+    - 若 `new_i` 这个位置上现在是 EMPTY，则将数据复制过去，并设置为 FULL，继续 步骤 2。这相当于添加到 Group 中。  
+    - 若 `i` 这个位置上现在是 DELETE，那么交换数据，并设置 `new_i` 为 FULL，继续 步骤 1.1。这相当于将 Group 中原有的项先复制出来，再将现在的数据添加进 Group，最后重新处理这个原有项。  
+
+    1.3. 若 `i` 与 `new_i` 在以 hash 开头的同一个 Group 里，那么直接设置 `i` 位置上的控制位为 FULL 即可。这是因为：  
+    
+    - `i < new_i` 是不可能发生的，因为 `new_i` 是第一个可以被插入的位置，而 `i` 是 DELETE 是可以被插入的，所以一定满足 `i <= new_i`
+    - 若 `i == new_i`，那么改控制位为 FULL 即可
+    - 若 `i > new_i`，因为 1.2 中的算法最终不会产生或移动 DELETE 项，只会产生 FULL 或 EMPTY 项，可以知道如果已经遍历到 `i`，那么任意小于 `i` 的项都已经被处理了，一定只会是 FULL 或 EMPTY，这里 `new_i` 又是一个可以插入的位置，所以一定是 EMPTY。这里可以不和 EMPTY 交换，因为不会影响查询和后续的插入操作  
+
+3. 最后维护剩余容量  
+
