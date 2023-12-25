@@ -121,7 +121,7 @@ T_{a+b} &= \sum_{i=0}^{a+b-1}i \mod n\\
 \begin{aligned}
 T_{2n+k} - T_{k} &= T_{2n} + T_k + 2nk - T_k \mod n\\
                  &= T_{2n} + 2nk \mod n\\
-                 &= n(2n+1) + 2nk \mod n \\
+                 &= (2n+1)n + 2nk \mod n \\
                  &= 0
 \end{aligned}
 ```
@@ -195,6 +195,15 @@ let z = x ^ u32::from_ne_bytes(y);
 z.wrapping_sub(repeat(0x01)) & !z & repeat(0x80)
 ```
 
+### 将 `0x80` 转为 `0xff`，`0xff` 保持 `0xff`，其他转为 `0x80`
+
+首先将自己取反后与 `0x80` 相与，这样 `0x80` 与 `0xff` 会转为 `0x00`，其他会转为 `0x80`。再取最高位后加上取反的结果，那么 `0x00` 会变为 `0x7f`，`0x80` 会变为 `0x80`。  
+
+```rs
+let y = !x & repeat(0x80);
+!y + (y >> 7)
+```
+
 # hashbrown 的工作原理
 
 ## 内存布局
@@ -249,8 +258,10 @@ hashbrown 中定义了 `h1`, `h2` 函数：
   - 若 `size < 8`，则剩余容量取 `size - 1`，保留 1 个 EMPTY 项  
   - 若 `size >= 8`，则剩余容量取 `$$\dfrac{7}{8} \cdot size$$`，保留 12.5% 的 EMPTY 项，用于控制 load factor  
 - 计算内存布局并分配内存：  
-  - 计算 control 在内存的对齐大小
-  - 计算 control bit 的偏移
+  - 计算 control 在内存的对齐大小 `control_align`：由于 `T` 和 `Group` 都要对齐，所以取 `max(sizeof(T), Group::WIDTH)`
+  - 计算 control bit 的偏移 `control_offset`：`$$\lceil \dfrac{sizeof(T) \cdot n}{control\_align} \rceil \cdot control\_align $$`  
+  - 分配内存 `control_offset + size + Group::WIDTH` bytes
+- 将控制位段全部初始化位 `0xff`
 
 从上面的操作可以知道 hashbrown 的一些特性：
 
@@ -277,7 +288,7 @@ h2_hash = h2(key)
 - **如果 Group 中存在 EMPTY 项，则直接返回不存在，这是没有找到匹配项的唯一终止条件**。  
 - 否则，按三角数偏移 pos 移动到下个 Group 继续查找。
 
-整个查找过程没有额外的终止条件，即查找过程要么找到 `key` 一致的项并返回 `value`，要么找到 EMPTY 返回不存在。这要求 **表里一定要存在 EMPTY 项**。
+整个查找过程没有额外的终止条件，即查找过程要么找到 `key` 一致的项并返回 `value`，要么找到 EMPTY 返回不存在。这要求表里一定要存在 EMPTY 项，而初始化时保证了表里一定有 EMPTY 项。
 
 ## 插入 `(key, value)`
 
@@ -323,13 +334,13 @@ hashbrown 中表的大小和容量实际上是不一致的。在表的大小超�
 
 1. 预处理：在控制位段上，把 FULL 改为 DELETE，DELETE 改为 EMPTY  
 2. 顺序遍历 DELETE 位。假设当前位置为 `i`  
-    1.1. 重新计算 `i` 位置的数据的 hash 并照查找算法得到新的位置 `new_i`    
-    1.2. 若 `i` 与 `new_i` 不在以 hash 开头的同一个 Group 里  
+    2.1. 重新计算 `i` 位置的数据的 hash 并照查找算法得到新的位置 `new_i`    
+    2.2. 若 `i` 与 `new_i` 不在以 hash 开头的同一个 Group 里  
 
     - 若 `new_i` 这个位置上现在是 EMPTY，则将数据复制过去，并设置为 FULL，继续 步骤 2。这相当于添加到 Group 中。  
-    - 若 `i` 这个位置上现在是 DELETE，那么交换数据，并设置 `new_i` 为 FULL，继续 步骤 1.1。这相当于将 Group 中原有的项先复制出来，再将现在的数据添加进 Group，最后重新处理这个原有项。  
+    - 若 `i` 这个位置上现在是 DELETE，那么交换数据，并设置 `new_i` 为 FULL，继续 步骤 2.1。这相当于将 Group 中原有的项先复制出来，再将现在的数据添加进 Group，最后重新处理这个原有项。  
 
-    1.3. 若 `i` 与 `new_i` 在以 hash 开头的同一个 Group 里，那么直接设置 `i` 位置上的控制位为 FULL 即可。这是因为：  
+    2.3. 若 `i` 与 `new_i` 在以 hash 开头的同一个 Group 里，那么直接设置 `i` 位置上的控制位为 FULL 即可。这是因为：  
     
     - `i < new_i` 是不可能发生的，因为 `new_i` 是第一个可以被插入的位置，而 `i` 是 DELETE 是可以被插入的，所以一定满足 `i <= new_i`
     - 若 `i == new_i`，那么改控制位为 FULL 即可
@@ -337,3 +348,34 @@ hashbrown 中表的大小和容量实际上是不一致的。在表的大小超�
 
 3. 最后维护剩余容量  
 
+# hashbrown 的具体实现
+
+## BitMask
+
+`BitMask` 用于加载 Group 计算的结果，提供遍历方法。
+
+```rs
+#[derive(Copy, Clone)]
+pub(crate) struct BitMask(pub(crate) BitMaskWord);
+
+impl Iterator for BitMaskIter {
+    type Item = usize;
+
+    #[inline]
+    fn next(&mut self) -> Option<usize> {
+        let bit = self.0.lowest_set_bit()?;
+        self.0 = self.0.remove_lowest_bit();
+        Some(bit)
+    }
+}
+```
+
+在构造 `BitMask` 的时候一定会保证是小端序（little endian），如
+
+```rs
+BitMask((self.0 & (self.0 << 1) & repeat(0x80)).to_le())
+```
+
+## Group
+
+`Group` 顾名思义，用于加载 Group 的处理。
