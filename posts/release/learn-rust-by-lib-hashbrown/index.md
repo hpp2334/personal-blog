@@ -249,7 +249,9 @@ hashbrown 中定义了 `h1`, `h2` 函数：
 
 ![Control Bits & Group](/learn-rust-by-lib-hashbrown/Control_Bits_Group.png)
 
-控制位结尾多出来的 `Group::WIDTH` 个字节与前 `Group::WIDTH` 字节对应，具体的，`$$CT_i = CT_{i-n} (i \ge n)$$`。这样的设计是为了 Group 查询时以周期的方式查询。
+控制位结尾多出来的 `Group::WIDTH` 个字节与前 `Group::WIDTH` 字节对应，具体的，`$$CT_i = CT_{i-n} (i \ge n)$$`。这样的设计是为了 Group 查询时以周期的方式查询。  
+
+这里还要考虑一种例外的情况，当 `n < Group::WIDTH` 时，控制位结尾的 `n` 个字节与前 `n` 个字节对应，中间的 `Group::WIDTH - n` 个字节都是 EMPTY。
 
 ## 初始化
 
@@ -257,7 +259,7 @@ hashbrown 中定义了 `h1`, `h2` 函数：
 
 - 保证 `size` 一定是 2 的幂：  
   - 计算 `h1(x) % size` 可以转为 `h1(x) & (size - 1)`，避免非常慢的取模运算  
-  - 需要利用 “三角形 mod $$2^n$$” 的结论  
+  - 需要利用 “三角形 mod `$$2^n$$`” 的结论  
 - 计算剩余容量，保证表中一定有至少 1 个 EMPTY 项，剩余容量只用于控制扩容与 rehash：
   - 若 `size < 8`，则剩余容量取 `size - 1`，保留 1 个 EMPTY 项  
   - 若 `size >= 8`，则剩余容量取 `$$\dfrac{7}{8} \cdot size$$`，保留 12.5% 的 EMPTY 项，用于控制 load factor  
@@ -348,7 +350,7 @@ Index next_group_pos(pos) {
 
 特别的，若 `size < Group::WIDTH`，由于超过 `size` 的部分初始值为 EMPTY，所以得到的插入的位置可能是非法的，需要重新从第一个 Group 中加载一个 EMPTY 或 DELETED 的位置。  
 
-当得到了插入的位置后，可以直接写入数据，并写入控制位 `h2_hash`。特别的，若 `index < Group::WIDTH`，那么在 `index + size` 也写入相同的控制位 `h2_hash`，这是为了处理循环节问题，即 Group 起点位于最后 `Group::WIDTH` 项的情况。
+当得到了插入的位置后，可以直接写入数据，并写入控制位 `h2_hash`。特别的，若 `index < Group::WIDTH`，那么在 `index + size` 也写入相同的控制位 `h2_hash`，这是为了处理循环节问题，即 Group 起点位于最后 `Group::WIDTH` 项的情况。不仅是插入操作，所以更改控制位的操作都需要做这个维护。
 
 ```rust
 Void insert(key, value) {
@@ -373,7 +375,7 @@ Index find_empty_or_deleted_index(key) {
     pos = h1(key) % size
     loop_count = 0
 
-    loop forever {
+    loop {
         group = load_group(pos)
 
         if group.has_empty_or_deleted() {
@@ -386,13 +388,20 @@ Index find_empty_or_deleted_index(key) {
         pos = next_group_pos(pos, loop_count)
     }
 }
+
+Void store_control_bit(index, hash) {
+    bits[index] = hash
+    if index < Group::WIDTH {
+        bits[index + size] = hash
+    }
+}
 ```
 
 ## 删除 `key`
 
 执行查找 `key` 的操作找到对应的位置，然后标记为 DELETED 即可。
 
-但如果能够进一步标记为 EMPTY，那么可以为后续的 查找、插入、删除 提高性能。要标记为 EMPTY 就不能改变查询终止条件，即查询到 Group 时就需要终止，即任何包含 DELETED 的 Group 中都包含至少一个 EMPTY。这样的 EMPTY 必然至少有一个存在于 DELETED 的左侧，有一个存在于 DELETED 的右侧。
+但如果能够进一步标记为 EMPTY，那么可以为后续的 查找、插入、删除 提高性能。要标记为 EMPTY 就不能改变查询终止条件，即查询到 Group 内存在 EMPTY 时就需要终止，即任何包含 DELETED 的 Group 中都包含至少一个 EMPTY。这样的 EMPTY 必然至少有一个存在于 DELETED 的左侧，有一个存在于 DELETED 的右侧。
 
 ![DELETED to EMPTY requirement 1](/learn-rust-by-lib-hashbrown/DELETE_to_EMPTY_requirement_1.png)
 
@@ -437,8 +446,8 @@ Void resize(new_bucket_size) {
     // 创建新表
     let mut new_table = create_new_table(new_bucket_size)
 
-    for full_byte_index in self.full_buckets_indices() {
-        let hash = hasher(self, full_byte_index);
+    for full_byte_index in full_buckets_indices() {
+        let hash = hash(load_data(full_byte_index).key);
 
         new_index = new_table.find_empty_index(hash);
 
@@ -615,7 +624,6 @@ impl Group {
 
     #[inline]
     pub(crate) fn match_empty_or_deleted(self) -> BitMask {
-        // A byte is EMPTY or DELETED iff the high bit is set
         BitMask((self.0 & repeat(0x80)).to_le())
     }
 

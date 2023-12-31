@@ -1,6 +1,6 @@
 import 'katex/dist/katex.min.css';
 import { marked } from "marked";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import NextLink from "next/link";
 import NextImage from "next/image";
 import styles from "./post.module.scss";
@@ -110,12 +110,13 @@ function CommonTokens({ tokens }: { tokens: marked.Token[] }) {
 }
 
 function Heading({ token }: { token: marked.Tokens.Heading }) {
-  const Tag = `h${token.depth}` as "h2" | "h3" | "h4";
+  const Tag = `h${token.depth}` as "h1" | "h2" | "h3" | "h4";
 
   return (
     <Tag
       className={classnames({
         [styles.heading]: true,
+        [styles.h1]: token.depth === 1,
         [styles.h2]: token.depth === 2,
         [styles.h3]: token.depth === 3,
       })}
@@ -250,8 +251,24 @@ function TocItem({
   active: boolean,
   nativeElement: Element | null
 }) {
+  const tocItemRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+    const tocItemEl = tocItemRef.current;
+    if (!tocItemEl) {
+      return;
+    }
+    tocItemEl.scrollIntoView({
+      block: 'center'
+    })
+  }, [active])
+
   return (
     <div
+      ref={tocItemRef}
       className={classnames(styles[`tocH${depth}`], active && styles.tocItemActive)}
       onClick={() => {
         nativeElement?.scrollIntoView({ behavior: 'smooth' })
