@@ -1,4 +1,4 @@
-date: "2023-12-10"
+date: "2023-12-31"
 title: "从 Rust 库学 - hashbrown 的工作原理与具体实现"
 tags: ["rust"]
 abstract: "本文会阐述 hash 函数的特征， hashbrown 库的工作原理，以及解读 hashbrown 中的查找、插入、删除、扩容、rehash 代码。"
