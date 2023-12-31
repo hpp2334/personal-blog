@@ -1,6 +1,6 @@
 # 前言
 
-[hashbrown](https://github.com/rust-lang/hashbrown) 是 SwissTable 的 Rust 实现，而 SwissTable 是 Google 在 [CppCon 2017](https://www.youtube.com/watch?v=ncHmEUmJZf4) 上公开的一种更快的 HashTable。从 Rust 1.36 开始（2023.12.04 Rust stable 版本为 1.74.1），hashbrown 为 Rust `HashMap`/`HashSet` 的默认实现。
+[hashbrown](https://github.com/rust-lang/hashbrown) 是 SwissTable 的 Rust 实现，而 SwissTable 是 Google 在 [CppCon 2017](https://www.youtube.com/watch?v=ncHmEUmJZf4) 上公开的一种更快的 HashTable。从 Rust 1.36 开始（2023.12.04 Rust stable 版本为 1.74.1），hashbrown 为 Rust `HashMap`/`HashSet` 的默认实现。  
 
 最近笔者研究 hashbrown 库出于以下的两件事情。
 
@@ -206,6 +206,10 @@ let y = !x & repeat(0x80);
 
 # hashbrown 的工作原理
 
+## 注意
+
+本部分阐述 hashbrown 工作原理，其中查找、插入、删除等操作会附加伪代码，这些伪代码并不是 hashbrown 中的真实实现，hashbrown 中的实现会考虑性能因素，具体见 “hashbrown 的具体实现”。
+
 ## 内存布局
 
 ![Memory Layout](/learn-rust-by-lib-hashbrown/Memory_Layout.png)
@@ -254,7 +258,7 @@ hashbrown 中定义了 `h1`, `h2` 函数：
 - 保证 `size` 一定是 2 的幂：  
   - 计算 `h1(x) % size` 可以转为 `h1(x) & (size - 1)`，避免非常慢的取模运算  
   - 需要利用 “三角形 mod $$2^n$$” 的结论  
-- 计算剩余容量，保证表中一定有至少 1 个 EMPTY 项：
+- 计算剩余容量，保证表中一定有至少 1 个 EMPTY 项，剩余容量只用于控制扩容与 rehash：
   - 若 `size < 8`，则剩余容量取 `size - 1`，保留 1 个 EMPTY 项  
   - 若 `size >= 8`，则剩余容量取 `$$\dfrac{7}{8} \cdot size$$`，保留 12.5% 的 EMPTY 项，用于控制 load factor  
 - 计算内存布局并分配内存：  
@@ -292,6 +296,46 @@ h2_hash = h2(key)
 
 由于每次探测时都取一整个 Group，这里基于三角数的偏移实际上需要乘上 `Group::WIDTH`，即偏移量依次为 `Group::WIDTH`, `3 * Group::WIDTH`, `6 * Group::WIDTH`。为什么这样也是正确的？由于探测时 `Group::WIDTH < BucketSize`，`Group::WIDTH` 与 `BucketSize` 又都是 2 的幂，因此整个探测得到的各个 Group 任意两个之间不会重叠，可以把 Group 看成一个整体，这样就又回到了纯粹的基于三角数偏移的探测中。
 
+```rust
+T find(key) {
+    data_index = find_index(key)
+    if data_index == null {
+        return null
+    } else {
+        return load_data(data_index).value
+    }
+}
+
+Index find_index(key) {
+    pos = h1(key) % size
+    h2_hash = h2(key)
+    loop_count = 0
+
+    loop forever {
+        group = load_group(pos)
+
+        foreach bit in group.match(h2_hash) {
+            data_index = (pos + bit) % size
+
+            if load_data(data_index).key == key {
+                return data_index
+            }
+        }
+
+        if group.has_empty() {
+            return null
+        }
+
+        loop_count += 1
+        pos = next_group_pos(pos, loop_count)
+    }
+}
+
+Index next_group_pos(pos) {
+    pos = (pos + loop_count * Group::WIDTH) % size
+}
+```
+
 ## 插入 `(key, value)`
 
 按查找中相同的计算得到 `pos` 与 `h2_hash`，并加载 Group。
@@ -306,6 +350,44 @@ h2_hash = h2(key)
 
 当得到了插入的位置后，可以直接写入数据，并写入控制位 `h2_hash`。特别的，若 `index < Group::WIDTH`，那么在 `index + size` 也写入相同的控制位 `h2_hash`，这是为了处理循环节问题，即 Group 起点位于最后 `Group::WIDTH` 项的情况。
 
+```rust
+Void insert(key, value) {
+    // ...
+
+    data_index = find_index(key)
+    if data_index == null {
+        // 没找到，那么找 EMPTY 或 DELETED
+        data_index = find_empty_or_deleted_index(key)
+    }
+
+    // 一定能找到，最不济都会是 EMPTY 项的位置
+    assert(data_index != null)
+
+    store_data(data_index, Item { key, value })
+
+    h2_hash = h2(key)
+    store_control_bit(data_index, h2_hash)
+}
+
+Index find_empty_or_deleted_index(key) {
+    pos = h1(key) % size
+    loop_count = 0
+
+    loop forever {
+        group = load_group(pos)
+
+        if group.has_empty_or_deleted() {
+            bit = group.lowest_empty_or_deleted()
+            data_index = (pos + bit) % size
+            return data_index
+        }
+
+        loop_count += 1
+        pos = next_group_pos(pos, loop_count)
+    }
+}
+```
+
 ## 删除 `key`
 
 执行查找 `key` 的操作找到对应的位置，然后标记为 DELETED 即可。
@@ -318,11 +400,29 @@ h2_hash = h2(key)
 
 ![DELETED to EMPTY requirement 2](/learn-rust-by-lib-hashbrown/DELETE_to_EMPTY_requirement_2.png)
 
-特别的，如果 `n < Group::WIDTH`，根据上面的优化，表中一定不存在 DELETE。
+特别的，如果 `size < Group::WIDTH`，根据上面的优化，表中一定不存在 DELETE。
+
+```rust
+Void remove(index) {
+    assert(load_control(index) == FULL)
+
+    index_before = index
+    if index >= Group::WIDTH {
+        index_before = index - Group::WIDTH
+    }
+
+    group_before = load_group(index_before)
+    group = load_group(index)
+
+    if suffix_zeros(group_before.match_empty()) + prefix_zeros(group.match_empty()) >= Group::WIDTH {
+        store_control_bit(index, DELETED)
+    } else {
+        store_control_bit(index, EMPTY)
+    }
+}
+```
 
 ## 扩容、缩容
-
-hashbrown 中表的大小和容量实际上是不一致的。在表的大小超过 8 后，表的容量会按照表的大小的 `$$\dfrac{7}{8}$$` 计算，这是为了让表剩下至少 `$$\dfrac{1}{8}$$` 的 EMPTY 项。
 
 执行插入操作时，若剩余容量为 0，且正好剩下的 FULL 项超过了容量的 `$$\dfrac{1}{2}$$`，那么执行扩容操作：
 
@@ -331,6 +431,25 @@ hashbrown 中表的大小和容量实际上是不一致的。在表的大小超�
 3. 最后记录新的表的已有大小与剩余容量
 
 缩容操作在 hashbrown 中并不会主动执行，需要使用者主动调用执行，其原理实际上就是扩容的原理，通过重新构造表实现。
+
+```rust
+Void resize(new_bucket_size) {
+    // 创建新表
+    let mut new_table = create_new_table(new_bucket_size)
+
+    for full_byte_index in self.full_buckets_indices() {
+        let hash = hasher(self, full_byte_index);
+
+        new_index = new_table.find_empty_index(hash);
+
+        new_table.store_data(new_index, load_data(new_index))
+        new_table.store_control_bit(new_index, h2(hash))
+    }
+    new_table.growth_left -= len();
+    new_table.items = len();
+    swap(self, new_table)
+}
+```
 
 ## Rehash
 
@@ -353,6 +472,49 @@ hashbrown 中表的大小和容量实际上是不一致的。在表的大小超�
     - 若 `i > new_i`，因为 1.2 中的算法最终不会产生或移动 DELETED 项，只会产生 FULL 或 EMPTY 项，可以知道如果已经遍历到 `i`，那么任意小于 `i` 的项都已经被处理了，一定只会是 FULL 或 EMPTY，这里 `new_i` 又是一个可以插入的位置，所以一定是 EMPTY。这里可以不和 EMPTY 交换，因为不会影响查询和后续的插入操作  
 
 3. 最后维护剩余容量  
+
+```rust
+fn rehash() {
+    foreach group in groups() {
+        group.convert_deleted_to_empty_and_full_to_deleted()
+    }
+
+    foreach i in buckets() {
+        if load_control(i) != DELETED {
+            continue;
+        }
+
+        loop {
+            key = load_data(i).key
+            h2_hash = h2(key)
+
+            new_i = find_empty_or_deleted_index(hash);
+
+            if is_in_same_group(i, new_i, h2_hash) {
+                store_control_bit(i, hash)
+                break
+            }
+
+            new_i_control_bit = load_control(new_i)
+            if prev_ctrl == EMPTY {
+                store_data(new_i, load_data(i))
+                store_control_bit(new_i, h2_hash)
+                store_control_bit(i, EMPTY)
+                break
+            } else {
+                assert(new_i_control_bit == DELETED)
+
+                new_i_data = load_data(new_i)
+                store_data(new_i, load_data(i))
+                store_control_bit(new_i, h2_hash)
+                store_data(i, new_i_data)
+            }
+        }
+    }
+
+    growth_left = buckets().len() - len();
+}
+```
 
 # hashbrown 的具体实现
 
@@ -637,7 +799,6 @@ struct RawTableInner {
 ### 初始化
 
 ```rust
-
 // 容量转为桶数量
 #[cfg_attr(target_os = "emscripten", inline(never))]
 #[cfg_attr(not(target_os = "emscripten"), inline)]
@@ -1112,7 +1273,7 @@ impl RawTableInner {
         }
     }
 
-    // 
+    // rehash
     #[allow(clippy::inline_always)]
     #[cfg_attr(feature = "inline-more", inline(always))]
     #[cfg_attr(not(feature = "inline-more"), inline)]
@@ -1184,17 +1345,94 @@ impl RawTableInner {
         // 这里需要避免 guard 的回调被执行，因为它只在 panic 时执行
         mem::forget(guard);
     }
+
+    // resize 前准备
+    #[allow(clippy::mut_mut)]
+    #[inline]
+    fn prepare_resize<'a, A>(
+        &self,
+        alloc: &'a A,
+        table_layout: TableLayout,
+        capacity: usize,
+        fallibility: Fallibility,
+    ) -> Result<crate::scopeguard::ScopeGuard<Self, impl FnMut(&mut Self) + 'a>, TryReserveError>
+    where
+        A: Allocator,
+    {
+        debug_assert!(self.items <= capacity);
+
+        // 创建新的 RawTableInner
+        let new_table =
+            RawTableInner::fallible_with_capacity(alloc, table_layout, capacity, fallibility)?;
+
+        // hasher 发生 panic 时，bucket_mask != 0，此时满足 !self_.is_empty_singleton()，会手动把剩下的桶也清除掉
+        Ok(guard(new_table, move |self_| {
+            if !self_.is_empty_singleton() {
+                unsafe { self_.free_buckets(alloc, table_layout) };
+            }
+        }))
+    }
+    
+    // 找到 InsertSlot，先设置控制位
+    #[inline]
+    unsafe fn prepare_insert_slot(&mut self, hash: u64) -> (usize, u8) {
+        let index: usize = self.find_insert_slot(hash).index;
+
+        let old_ctrl = *self.ctrl(index);
+        self.set_ctrl_h2(index, hash);
+        (index, old_ctrl)
+    }
+
+    // resize
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    unsafe fn resize_inner<A>(
+        &mut self,
+        alloc: &A,
+        capacity: usize,
+        hasher: &dyn Fn(&mut Self, usize) -> u64,
+        fallibility: Fallibility,
+        layout: TableLayout,
+    ) -> Result<(), TryReserveError>
+    where
+        A: Allocator,
+    {
+        // 创建新表
+        let mut new_table = self.prepare_resize(alloc, layout, capacity, fallibility)?;
+
+        for full_byte_index in self.full_buckets_indices() {
+            let hash = hasher(self, full_byte_index);
+
+            // 找到 InsertSlot，设置控制位
+            let (new_index, _) = new_table.prepare_insert_slot(hash);
+
+            // 拷贝数据
+            ptr::copy_nonoverlapping(
+                self.bucket_ptr(full_byte_index, layout.size),
+                new_table.bucket_ptr(new_index, layout.size),
+                layout.size,
+            );
+        }
+        // 维护剩余容量与已有项
+        new_table.growth_left -= self.items;
+        new_table.items = self.items;
+        // 交换两张表
+        mem::swap(self, &mut new_table);
+
+        Ok(())
+    }
 }
 ```
 
-## SIMD
-
-WIP
-
-## 为什么 hashbrown 快？
-
-WIP
-
 ## 后言
 
-TODO
+本文目前至少缺失了两个部分：  
+
+- hashbrown 性能为什么这么高？  
+- SIMD 部分  
+
+不管有没有缺失，笔者依然建议读者自己把 hashbrown 的代码 clone 下来阅读，其中包含了作者的不少注释。  
+
+以下是废话：  
+
+hashbrown 是笔者工作这两年见过的写的最精炼的算法，没有之一。无论是其中对于 `if` 语句的避免，还是对于 LLVM IR 的考量，对于使用 dynamic dispatch 的考量等等。阅读 hashbrown 的实现不一定会对平时的编码有直接的帮助，更多的是无形之中的帮助。整个 hahsbrown 的实现，或者说 SwissTable 的设计，给笔者一种很熟悉的以前搞 ACM 的感觉，这是笔者第一次发现 ACM 算法思维在工程界上有如此大的应用。所以说，即使工作了也要偶尔写写题，就像以前师兄说的：“我们学的东西有技术壁垒，一般人一时半会搞不懂”。  
