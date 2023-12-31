@@ -1,9 +1,7 @@
-import Image from "next/image";
 import { GetStaticProps } from "next";
 import { getPosts } from "@/data/posts.data";
 import Link from "next/link";
 import { getPostHref, PostMeta, TAGS } from "@/core/post.core";
-import { AppBar, AppBarMenuMask } from "@/widgets/appbar";
 import { fmtDate } from "@/utils/common";
 import styles from "./home.module.scss";
 import { CommonLayout, FullscreenScrollable, Layout } from "@/widgets/layout";

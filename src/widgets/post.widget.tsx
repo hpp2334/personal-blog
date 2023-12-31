@@ -14,6 +14,7 @@ import { githubLight } from "@codesandbox/sandpack-themes";
 import { decodeHTMLEntities } from "@/utils/common";
 import 'katex/dist/katex.min.css';
 import { useGlobalScroll } from './layout';
+import { Waline } from './waline'
 
 export interface CodeDemo {
   codes: Array<{
@@ -380,6 +381,9 @@ export function PostContentWidget() {
           })()}
         </React.Fragment>
       ))}
+      <div className={styles.comments}>
+        <Waline path={typeof location === 'undefined' ? '/' : location.pathname} serverURL={'https://comments.hpp2334.com'} />
+      </div>
     </div>
   );
 }
