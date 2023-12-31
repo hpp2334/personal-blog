@@ -2,13 +2,14 @@
 @import "@/widgets/global.module.scss";
 
 $top: 60px;
+
 .mask {
   position: absolute;
   content: "";
   left: 0;
   right: 0;
   top: 0;
-  height: 250px + $top;
+  height: 330px;
   background-color: $website-bg-color;
   z-index: -999;
 }

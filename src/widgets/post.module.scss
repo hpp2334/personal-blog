@@ -92,6 +92,16 @@
     height: 300px;
   }
 
+  .latex {
+    &.block {
+      max-width: 100vw;
+      overflow-x: auto;
+    }
+    &.span {
+      word-break: break-all;
+    }
+  }
+
   .toc {
     display: none;
     font-size: 12px;

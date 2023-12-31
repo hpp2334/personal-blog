@@ -13,7 +13,6 @@ import constate from "constate";
 import { githubLight } from "@codesandbox/sandpack-themes";
 import { decodeHTMLEntities } from "@/utils/common";
 import 'katex/dist/katex.min.css';
-import { InlineMath, BlockMath } from 'react-katex';
 import { useGlobalScroll } from './layout';
 
 export interface CodeDemo {
@@ -35,6 +34,8 @@ const Stackblitz = dynamic(() =>
 const Sandpack = dynamic(() =>
   import("@codesandbox/sandpack-react").then((v) => v.Sandpack)
 );
+const InlineMath = dynamic(() => import('react-katex').then(v => v.InlineMath))
+const BlockMath = dynamic(() => import('react-katex').then(v => v.BlockMath))
 
 function usePost({
   rawStr,
@@ -81,7 +82,7 @@ function CommonToken({ token }: { token: marked.Token }) {
       return <Strong token={token} />;
     case "codespan":
       if (token.text.startsWith("$$") && token.text.endsWith("$$")) {
-        return <InlineMath math={token.text.slice(2, -2)} />
+        return <span className={classnames(styles.latex, styles.inline)}><InlineMath math={token.text.slice(2, -2)} /></span>
       }
       return (
         <code
@@ -227,7 +228,7 @@ function Code({ token }: { token: marked.Tokens.Code }) {
     );
   }
   if (token.lang === "math") {
-    return <BlockMath math={token.text} />
+    return <div className={classnames(styles.latex, styles.block)}><BlockMath math={token.text} /></div>
   }
   return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
 }
@@ -338,7 +339,7 @@ function Toc({
   }, [])
 
   // blue background height
-  if (scrollTop < 310) {
+  if (scrollTop < 330) {
     return null
   }
 
