@@ -13,6 +13,10 @@
     color: rgb(0, 52, 110);
     letter-spacing: 0.5px;
 
+    &.h1 {
+      margin-top: 80px;
+    }
+
     &.h2 {
       margin-top: 40px;
     }
@@ -75,10 +79,47 @@
   }
 
   .image {
-    max-width: 100%;
+    object-fit: contain;
   }
 
   .wrapperSandpack {
     margin: 10px 0;
+  }
+
+  .imageContainer {
+    display: block;
+    position: relative;
+    height: 300px;
+  }
+
+  .toc {
+    display: none;
+    font-size: 12px;
+    flex-direction: column;
+    gap: 12px;
+    position: fixed;
+    right: calc(50vw - 800px);
+    top: 100px;
+    max-width: 300px;
+    max-height: 500px;
+    overflow-y: scroll;
+    cursor: pointer;
+
+    @media screen and (min-width: 1600px) {
+      display: flex;
+    }
+
+    .tocH1 {
+      padding-left: 0px;
+    }
+    .tocH2 {
+      padding-left: 8px; 
+    }
+    .tocH3 {
+      padding-left: 16px; 
+    }
+    .tocItemActive {
+      color: $primary-color;
+    }
   }
 }

@@ -1,5 +1,5 @@
 date: "2022-04-03"
-title: "从库学 Rust - tower"
+title: "从 Rust 库学 - tower"
 tags: ["rust"]
 abstract: "本文会介绍 tower 的核心、部分工具与特性，并会手动实现一部分工具与特性。"
 requirements: []
