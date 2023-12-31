@@ -5,8 +5,6 @@ import {
     init,
 } from '@waline/client';
 
-import '@waline/client/waline.css';
-
 export type WalineOptions = Omit<WalineInitOptions, 'el'> & { path: string };
 
 export const Waline = (props: WalineOptions) => {

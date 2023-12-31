@@ -13,8 +13,8 @@ import constate from "constate";
 import { githubLight } from "@codesandbox/sandpack-themes";
 import { decodeHTMLEntities } from "@/utils/common";
 import 'katex/dist/katex.min.css';
+import '@waline/client/waline.css';
 import { useGlobalScroll } from './layout';
-import { Waline } from './waline'
 
 export interface CodeDemo {
   codes: Array<{
@@ -37,6 +37,7 @@ const Sandpack = dynamic(() =>
 );
 const InlineMath = dynamic(() => import('react-katex').then(v => v.InlineMath))
 const BlockMath = dynamic(() => import('react-katex').then(v => v.BlockMath))
+const Waline = dynamic(() => import('./waline').then(v => v.Waline))
 
 function usePost({
   rawStr,
