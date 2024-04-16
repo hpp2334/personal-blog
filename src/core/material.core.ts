@@ -51,7 +51,7 @@ export const recommendMaterials: MaterialConfig = [
 
 export const selfMaterials: MaterialConfig = [
   {
-    section: "Utility",
+    section: "App & WEB",
     items: [
       {
         title: "Handy Online Tools",
@@ -59,6 +59,37 @@ export const selfMaterials: MaterialConfig = [
           "提供一系列在开发过程中使用的编写工具，包括文件预览、MD5 校验等",
         link: "https://hol.hpp2334.com/",
       },
+      {
+        title: "Ease Music Player",
+        description: "支持 WebDAV 的 Android 流式音乐播放器，使用 Rust 与 Flutter 编写",
+        link: "https://github.com/hpp2334/ease-music-player"
+      },
+      {
+        title: "KuteClip",
+        description: "支持 Windows 与 Mac 的剪切板历史应用，使用 tauri 编写",
+        link: "https://github.com/hpp2334/kute-clip"
+      },
+    ],
+  },
+  {
+    section: "Lib",
+    items: [
+      {
+        title: "Misty VM",
+        description:
+          "用于构造 ViewModel 的 Rust 库，一般用于跨端开发，如 flutter, tauri 等",
+        link: "https://github.com/hpp2334/misty-vm",
+      },
+      {
+        title: "Slight Stream Archiver",
+        description: "流式创建 zip 文件，需要环境支持 WASM",
+        link: "https://github.com/hpp2334/slight-stream-archiver"
+      },
+      {
+        title: "pbw-moon",
+        description: "protobuf.js writer，具有更小的内存堆占用",
+        link: "https://github.com/hpp2334/pbw-moon",
+      }
     ],
   },
 ];
