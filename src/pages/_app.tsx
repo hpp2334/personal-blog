@@ -1,3 +1,5 @@
+import 'katex/dist/katex.min.css';
+import '@waline/client/waline.css';
 import type { AppProps } from "next/app";
 import { Noto_Sans } from "next/font/google";
 import { useEffect } from "react";

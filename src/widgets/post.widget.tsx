@@ -12,8 +12,6 @@ import constate from "constate";
 // @ts-ignore
 import { githubLight } from "@codesandbox/sandpack-themes";
 import { decodeHTMLEntities } from "@/utils/common";
-import 'katex/dist/katex.min.css';
-import '@waline/client/waline.css';
 import { useGlobalScroll } from './layout';
 
 export interface CodeDemo {
@@ -360,28 +358,30 @@ export function PostContentWidget() {
   const { tokens } = usePostContext();
 
   return (
-    <div className={styles.post}>
-      <Toc tokens={tokens} />
-      {tokens.map((token, index) => (
-        <React.Fragment key={index}>
-          {(() => {
-            switch (token.type) {
-              case "heading":
-                return <Heading token={token} />;
-              case "paragraph":
-                return <Paragraph token={token} />;
-              case "list":
-                return <List token={token} />;
-              case "code":
-                return <Code token={token} />;
-              case "blockquote":
-                return <BlockQuote token={token} />;
-              default:
-                return <CommonToken token={token} />;
-            }
-          })()}
-        </React.Fragment>
-      ))}
+    <div>
+      <div className={styles.post}>
+        <Toc tokens={tokens} />
+        {tokens.map((token, index) => (
+          <React.Fragment key={index}>
+            {(() => {
+              switch (token.type) {
+                case "heading":
+                  return <Heading token={token} />;
+                case "paragraph":
+                  return <Paragraph token={token} />;
+                case "list":
+                  return <List token={token} />;
+                case "code":
+                  return <Code token={token} />;
+                case "blockquote":
+                  return <BlockQuote token={token} />;
+                default:
+                  return <CommonToken token={token} />;
+              }
+            })()}
+          </React.Fragment>
+        ))}
+      </div>
       <div className={styles.comments}>
         <Waline path={typeof location === 'undefined' ? '/' : location.pathname} serverURL={'https://comments.hpp2334.com'} />
       </div>
