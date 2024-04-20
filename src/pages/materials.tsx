@@ -1,6 +1,6 @@
 import { GetStaticProps } from "next";
 import { getPosts } from "@/data/posts.data";
-import { PostMeta } from "@/core/post.core";
+import { PostMeta, PostMetaStore } from "@/core/post.core";
 import styles from "./materials.module.scss";
 import { CommonLayout } from "@/widgets/layout";
 import {
@@ -13,17 +13,8 @@ import { SEO } from "@/widgets/seo.widget";
 import { WebsiteMeta } from "@/core/meta.core";
 
 interface Props {
-  metas: PostMeta[];
+  metaStores: PostMetaStore[];
 }
-
-export const getStaticProps: GetStaticProps<Props> = async (context) => {
-  const metas = await getPosts();
-  return {
-    props: {
-      metas,
-    }, // will be passed to the page component as props
-  };
-};
 
 function MaterialItemCard({ item }: { item: MaterialItem }) {
   return (
