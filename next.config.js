@@ -12,6 +12,10 @@ const nextConfig = {
     );
     return config;
   },
+  i18n: {
+    locales: ['en', 'cn'],
+    defaultLocale: 'cn'
+  },
 };
 
 module.exports = nextConfig

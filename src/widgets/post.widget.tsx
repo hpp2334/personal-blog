@@ -13,6 +13,7 @@ import constate from "constate";
 import { githubLight } from "@codesandbox/sandpack-themes";
 import { decodeHTMLEntities } from "@/utils/common";
 import { useGlobalScroll } from './layout';
+import { useRouter } from 'next/router';
 
 export interface CodeDemo {
   codes: Array<{
@@ -284,7 +285,8 @@ function Toc({
 }: {
   tokens: marked.TokensList
 }) {
-  const [effected, setEffected] = useState(false)
+  const [signal, setSignal] = useState(false)
+  const router = useRouter()
   const scrollTop = useGlobalScroll()
   const headings = useMemo(() => tokens.filter(token => token.type === 'heading' && token.depth <= 3).map(token => {
     if (token.type !== 'heading') {
@@ -308,7 +310,7 @@ function Toc({
       }
     }
     return els
-  }, [effected, headings, typeof document === 'undefined', typeof location !== 'undefined' && location.href])
+  }, [signal, headings, typeof document === 'undefined', typeof location !== 'undefined' && location.href])
 
   const activeIndex = useMemo(() => {
     const infos: Array<{ top: number, bottom: number }> = []
@@ -335,8 +337,8 @@ function Toc({
   }, [nativeElements, scrollTop])
 
   useEffect(() => {
-    setEffected(true)
-  }, [])
+    setSignal(x => !x)
+  }, [router.locale])
 
   // blue background height
   if (scrollTop < 330) {
