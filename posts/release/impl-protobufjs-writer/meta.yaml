@@ -1,0 +1,10 @@
+date: "2024-04-19"
+title: "自实现 protobuf.js writer"
+tags: ["fe"]
+abstract: "本文记录了自实现 protobuf.js writer 的背景与要点, 涉及到 JavaScript 代码的性能优化与 protobuf 序列化正确性验证问题"
+requirements: []
+references:
+  [
+    ["writer.js", "https://github.com/protobufjs/protobuf.js/blob/master/src/writer.js"],
+    ["Protobuf Conformance Tests", "https://github.com/bufbuild/protobuf-conformance"],
+  ]
