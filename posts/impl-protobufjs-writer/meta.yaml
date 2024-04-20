@@ -1,7 +1,10 @@
 date: "2024-04-19"
+has_en: true
 title: "自实现 protobuf.js writer"
+title_en: "A custom protobuf.js writer"
 tags: ["fe"]
-abstract: "本文记录了自实现 protobuf.js writer 的背景与要点, 涉及到 JavaScript 代码的性能优化与 protobuf 序列化正确性验证问题"
+abstract: "本文记录了自实现 protobuf.js writer 的背景与要点, 涉及到 JavaScript 代码的性能优化与 protobuf 序列化正确性验证问题。"
+abstract_en: "This post documents the background and key points of implementing a protobuf.js writer, involving performance optimization of JavaScript code and verification of protobuf serialization correctness."
 requirements: []
 references:
   [

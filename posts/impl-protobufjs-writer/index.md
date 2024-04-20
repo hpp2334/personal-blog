@@ -209,7 +209,7 @@ main()
 
 - 代码内 assert  
 - 自编写单元测试与 Fuzz 测试  
-- [Google protobuf conformance test](https://github.com/protocolbuffers/protobuf/tree/main/conformance)，[protobuf-conformance](https://github.com/bufbuild/protobuf-conformance) 测试了若干 JS 实现的 protobuf 库的通过表现  
+- 与官方的 writer 在 [Google protobuf conformance test](https://github.com/protocolbuffers/protobuf/tree/main/conformance) 中得到一致的结果，[protobuf-conformance](https://github.com/bufbuild/protobuf-conformance) 测试了若干 JS 实现的 protobuf 库的通过表现  
 
 
 ## assert
@@ -233,7 +233,7 @@ export class ByteVec {
 }
 ```
 
-在构建生产环境的包时，如果使用 rollup，可以用 rollup-plugin-unassert 插件把所有的 `assert` 语句去掉。
+在构建生产环境的包时，如果使用 rollup，可以用 [rollup-plugin-unassert](https://github.com/unassert-js/rollup-plugin-unassert) 插件把所有的 `assert` 语句去掉。
 
 # 结论
 
