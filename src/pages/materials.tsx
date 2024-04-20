@@ -11,6 +11,7 @@ import {
 } from "@/core/material.core";
 import { SEO } from "@/widgets/seo.widget";
 import { WebsiteMeta } from "@/core/meta.core";
+import { useRouter } from "next/router";
 
 interface Props {
   metaStores: PostMetaStore[];
@@ -48,9 +49,13 @@ function MaterialItems({ config }: { config: MaterialConfig }) {
 }
 
 export default function Home() {
+  const router = useRouter()
+  const isEN = router.locale === 'en'
+  const description = isEN ? WebsiteMeta.description_en : WebsiteMeta.description
+
   return (
     <>
-      <SEO subTitle="Materials" description={WebsiteMeta.description} />
+      <SEO subTitle="Materials" description={description} />
       <CommonLayout className={styles.materials}>
         <h2 className={styles.title}>Recommend Materials</h2>
         <h3 className={styles.subTitle}>

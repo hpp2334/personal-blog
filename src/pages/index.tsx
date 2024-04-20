@@ -61,17 +61,18 @@ function _Divider({ text }: { text: string }) {
 export default function Home(props: Props) {
   const router = useRouter()
   const { metaStores } = props;
-  const isEn = router.locale === 'en'
+  const isEN = router.locale === 'en'
   const metas = metaStores.map(store => new PostMeta(store))
+  const description = isEN ? WebsiteMeta.description_en : WebsiteMeta.description
 
   const isMetaHasEn = (meta: PostMeta) => meta.has_en
 
   return (
     <>
-      <SEO description={WebsiteMeta.description} />
+      <SEO description={description} />
       <CommonLayout className={styles.home}>
         <div className={styles.posts}>
-          {!isEn && (
+          {!isEN && (
             <>
               {metas.map((meta, index) => (
                 <_PostCard key={index} meta={meta} locale={router.locale} />
@@ -79,7 +80,7 @@ export default function Home(props: Props) {
               <_Divider text="END" />
             </>
           )}
-          {isEn && (
+          {isEN && (
             <>
               {metas.filter(isMetaHasEn).map((meta, index) => (
                 <_PostCard key={index} meta={meta} locale={router.locale} />
