@@ -9,11 +9,13 @@ function generateSiteMap(posts: Array<PostMeta>) {
     return {
       ...mapPostSlug(post),
       date: post.date,
+      hasEn: post.has_en,
     }
   })
     .map((t) => ({
       slug: t.slug,
       date: fmtDate(t.date, "YYYY-MM-DD"),
+      hasEn: t.hasEn,
     }));
   const currentDate = fmtDate(Date.now(), "YYYY-MM-DD")
 
@@ -28,14 +30,29 @@ function generateSiteMap(posts: Array<PostMeta>) {
          <loc>https://${WebsiteMeta.host}/materials</loc>
          <lastmod>${currentDate}</lastmod>
        </url>
+       <url>
+         <loc>https://${WebsiteMeta.host}/en</loc>
+         <lastmod>${currentDate}</lastmod>
+       </url>
+       <url>
+         <loc>https://${WebsiteMeta.host}/en/materials</loc>
+         <lastmod>${currentDate}</lastmod>
+       </url>
        ${infos
-      .map(({ slug, date }) => {
-        return `<url>
+      .map(({ slug, date, hasEn }) => {
+        return [
+          `<url>
          <loc>https://${`${WebsiteMeta.host}/blog/${slug}`}</loc>
          <lastmod>${date}</lastmod>
        </url>
-       `;
-      })
+       `,
+          !hasEn ? "" : `<url>
+          <loc>https://${`${WebsiteMeta.host}/en/blog/${slug}`}</loc>
+          <lastmod>${date}</lastmod>
+        </url>
+        `
+        ].filter(Boolean);
+      }).flat()
       .join("")}
       </urlset>
    `;
