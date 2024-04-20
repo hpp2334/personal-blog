@@ -11,7 +11,6 @@ function generateSiteMap(posts: Array<PostMeta>) {
       date: post.date,
     }
   })
-    .filter((t) => !t.draft)
     .map((t) => ({
       slug: t.slug,
       date: fmtDate(t.date, "YYYY-MM-DD"),

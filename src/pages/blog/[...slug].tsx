@@ -15,7 +15,6 @@ import { SEO } from "@/widgets/seo.widget";
 
 interface UrlQuery {
   slug: string[];
-  draft?: string;
 
   [key: string]: string | string[] | undefined;
 }
@@ -39,8 +38,7 @@ export const getStaticProps: GetStaticProps<Props, UrlQuery> = async (
   context
 ) => {
   const slug = context.params?.slug ?? [];
-  const draft = Boolean(context.params?.draft);
-  const post = await getPost(slug, draft);
+  const post = await getPost(slug);
 
   if (!post) {
     return {
