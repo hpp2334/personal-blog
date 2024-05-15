@@ -54,6 +54,22 @@ export const recommendMaterials: MaterialConfig = [
   },
 ];
 
+
+export const toolMaterials: MaterialConfig = [
+  {
+    section: "Web Tools",
+    items: [
+      {
+        title: "Image Online Tools",
+        description:
+          "一个图片在线处理工具，包括图片格式转换，旋转，缩放等常见功能",
+        description_en: "An online image processing tool, including image format conversion, rotation, scaling and other common features.",
+        link: "https://image.clxhandy.com/",
+      },
+    ],
+  },
+]
+
 export const selfMaterials: MaterialConfig = [
   {
     section: "App & WEB",
