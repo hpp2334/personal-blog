@@ -1,0 +1,6 @@
+date: "2024-08-25"
+title: "FreeType 灰度光栅化器的实现"
+tags: ["fe"]
+abstract: "本文以笔者的视角阐述"
+requirements: []
+references: [["freetype", "https://gitlab.freedesktop.org/freetype/freetype"]]
