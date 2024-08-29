@@ -60,6 +60,12 @@ const TAGS: Record<string, TagInfo | undefined> = {
       cn: "Webpack",
     },
   },
+  render: {
+    name: {
+      en: "Render",
+      cn: "渲染"
+    }
+  }
 };
 
 export interface CodeDemoEntry {

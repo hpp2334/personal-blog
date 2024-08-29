@@ -1,4 +1,4 @@
-import 'katex/dist/katex.min.css';
+import "katex/dist/katex.min.css";
 import { marked } from "marked";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import NextLink from "next/link";
@@ -12,8 +12,8 @@ import constate from "constate";
 // @ts-ignore
 import { githubLight } from "@codesandbox/sandpack-themes";
 import { decodeHTMLEntities } from "@/utils/common";
-import { useGlobalScroll } from './layout';
-import { useRouter } from 'next/router';
+import { useGlobalScroll } from "./layout";
+import { useRouter } from "next/router";
 
 export interface CodeDemo {
   codes: Array<{
@@ -34,9 +34,15 @@ const Stackblitz = dynamic(() =>
 const Sandpack = dynamic(() =>
   import("@codesandbox/sandpack-react").then((v) => v.Sandpack)
 );
-const InlineMath = dynamic(() => import('react-katex').then(v => v.InlineMath))
-const BlockMath = dynamic(() => import('react-katex').then(v => v.BlockMath))
-const Waline = dynamic(() => import('./waline').then(v => v.Waline))
+const InlineMath = dynamic(() =>
+  import("react-katex").then((v) => v.InlineMath)
+);
+const BlockMath = dynamic(() => import("react-katex").then((v) => v.BlockMath));
+const Waline = dynamic(() => import("./waline").then((v) => v.Waline));
+
+const unescapeStr = (s: string) => {
+  return s.replaceAll("&#39;", "'");
+};
 
 function usePost({
   rawStr,
@@ -83,7 +89,11 @@ function CommonToken({ token }: { token: marked.Token }) {
       return <Strong token={token} />;
     case "codespan":
       if (token.text.startsWith("$$") && token.text.endsWith("$$")) {
-        return <span className={classnames(styles.latex, styles.inline)}><InlineMath math={token.text.slice(2, -2)} /></span>
+        return (
+          <span className={classnames(styles.latex, styles.inline)}>
+            <InlineMath math={unescapeStr(token.text.slice(2, -2))} />
+          </span>
+        );
       }
       return (
         <code
@@ -229,7 +239,11 @@ function Code({ token }: { token: marked.Tokens.Code }) {
     );
   }
   if (token.lang === "math") {
-    return <div className={classnames(styles.latex, styles.block)}><BlockMath math={token.text} /></div>
+    return (
+      <div className={classnames(styles.latex, styles.block)}>
+        <BlockMath math={token.text} />
+      </div>
+    );
   }
   return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
 }
@@ -242,18 +256,45 @@ function BlockQuote({ token }: { token: marked.Tokens.Blockquote }) {
   );
 }
 
+function Table({ token }: { token: marked.Tokens.Table }) {
+  return (
+    <table className={styles.customTable}>
+      <thead>
+        <tr>
+          {token.header.map((headerCell, index) => (
+            <th key={index}>
+              <CommonTokens tokens={headerCell.tokens} />
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {token.rows.map((row, rowIndex) => (
+          <tr key={rowIndex}>
+            {row.map((cell, cellIndex) => (
+              <td key={cellIndex}>
+                <CommonTokens tokens={cell.tokens} />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function TocItem({
   token,
   depth,
   active,
   nativeElement,
 }: {
-  token: marked.Tokens.Heading,
-  depth: 1 | 2 | 3,
-  active: boolean,
-  nativeElement: Element | null
+  token: marked.Tokens.Heading;
+  depth: 1 | 2 | 3;
+  active: boolean;
+  nativeElement: Element | null;
 }) {
-  const tocItemRef = useRef<HTMLDivElement>(null)
+  const tocItemRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!active) {
@@ -264,96 +305,113 @@ function TocItem({
       return;
     }
     tocItemEl.scrollIntoView({
-      block: 'center'
-    })
-  }, [active])
+      block: "center",
+    });
+  }, [active]);
 
   return (
     <div
       ref={tocItemRef}
-      className={classnames(styles[`tocH${depth}`], active && styles.tocItemActive)}
+      className={classnames(
+        styles[`tocH${depth}`],
+        active && styles.tocItemActive
+      )}
       onClick={() => {
-        nativeElement?.scrollIntoView({ behavior: 'smooth' })
-      }}>
+        nativeElement?.scrollIntoView({ behavior: "smooth" });
+      }}
+    >
       <CommonToken token={token} />
     </div>
-  )
+  );
 }
 
-function Toc({
-  tokens
-}: {
-  tokens: marked.TokensList
-}) {
-  const [signal, setSignal] = useState(false)
-  const router = useRouter()
-  const scrollTop = useGlobalScroll()
-  const headings = useMemo(() => tokens.filter(token => token.type === 'heading' && token.depth <= 3).map(token => {
-    if (token.type !== 'heading') {
-      throw "Internal Error"
-    }
-    return {
-      depth: token.depth as 1 | 2 | 3,
-      token,
-    }
-  }), [tokens])
+function Toc({ tokens }: { tokens: marked.TokensList }) {
+  const [signal, setSignal] = useState(false);
+  const router = useRouter();
+  const scrollTop = useGlobalScroll();
+  const headings = useMemo(
+    () =>
+      tokens
+        .filter((token) => token.type === "heading" && token.depth <= 3)
+        .map((token) => {
+          if (token.type !== "heading") {
+            throw "Internal Error";
+          }
+          return {
+            depth: token.depth as 1 | 2 | 3,
+            token,
+          };
+        }),
+    [tokens]
+  );
 
   const nativeElements = useMemo(() => {
-    if (typeof document === 'undefined') {
+    if (typeof document === "undefined") {
       return [];
     }
 
-    const els: Element[] = []
+    const els: Element[] = [];
     for (const el of document.querySelectorAll(`.${styles.heading}`)) {
       if (["H1", "H2", "H3"].includes(el.tagName)) {
-        els.push(el)
+        els.push(el);
       }
     }
-    return els
-  }, [signal, headings, typeof document === 'undefined', typeof location !== 'undefined' && location.href])
+    return els;
+  }, [
+    signal,
+    headings,
+    typeof document === "undefined",
+    typeof location !== "undefined" && location.href,
+  ]);
 
   const activeIndex = useMemo(() => {
-    const infos: Array<{ top: number, bottom: number }> = []
+    const infos: Array<{ top: number; bottom: number }> = [];
     for (const el of nativeElements) {
-      const rect = el.getBoundingClientRect()
+      const rect = el.getBoundingClientRect();
       infos.push({
         top: rect.top,
         bottom: rect.bottom,
-      })
+      });
     }
 
     if (infos.length === 0) {
-      return -1
+      return -1;
     }
     if (infos[0].top >= 0) {
-      return 0
+      return 0;
     }
     for (let i = 1; i < infos.length; i++) {
       if (infos[i].top > 5) {
         return i - 1;
       }
     }
-    return infos.length - 1
-  }, [nativeElements, scrollTop])
+    return infos.length - 1;
+  }, [nativeElements, scrollTop]);
 
   useEffect(() => {
-    setSignal(x => !x)
-  }, [router.locale])
+    setSignal((x) => !x);
+  }, [router.locale]);
 
   // blue background height
   if (scrollTop < 330) {
-    return null
+    return null;
   }
 
   return (
     <div className={classnames(styles.toc, styles.scroll)}>
       {headings.map((heading, index) => {
         return (
-          <TocItem key={index} token={heading.token} depth={heading.depth} active={activeIndex === index} nativeElement={nativeElements[index] ?? null} />
-        )
+          <TocItem
+            key={index}
+            token={heading.token}
+            depth={heading.depth}
+            active={activeIndex === index}
+            nativeElement={nativeElements[index] ?? null}
+          />
+        );
       })}
     </div>
-  )
+  );
 }
 
 export function PostContentWidget() {
@@ -377,6 +435,8 @@ export function PostContentWidget() {
                   return <Code token={token} />;
                 case "blockquote":
                   return <BlockQuote token={token} />;
+                case "table":
+                  return <Table token={token} />;
                 default:
                   return <CommonToken token={token} />;
               }
@@ -385,7 +445,10 @@ export function PostContentWidget() {
         ))}
       </div>
       <div className={styles.comments}>
-        <Waline path={typeof location === 'undefined' ? '/' : location.pathname} serverURL={'https://comments.hpp2334.com'} />
+        <Waline
+          path={typeof location === "undefined" ? "/" : location.pathname}
+          serverURL={"https://comments.hpp2334.com"}
+        />
       </div>
     </div>
   );
