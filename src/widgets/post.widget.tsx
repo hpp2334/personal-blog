@@ -41,7 +41,10 @@ const BlockMath = dynamic(() => import("react-katex").then((v) => v.BlockMath));
 const Waline = dynamic(() => import("./waline").then((v) => v.Waline));
 
 const unescapeStr = (s: string) => {
-  return s.replaceAll("&#39;", "'");
+  return s
+    .replaceAll("&#39;", "'")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&lt;", "<");
 };
 
 function usePost({

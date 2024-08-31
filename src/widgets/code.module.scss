@@ -1,0 +1,13 @@
+.codeContainer {
+  position: relative;
+
+  .codeTag {
+    position: absolute;
+    font-size: 11px;
+    padding: 2px 6px;
+    top: 0;
+    right: 0;
+    background-color: #d2d2d2;
+    border-bottom-left-radius: 4px;
+  }
+}
