@@ -211,7 +211,7 @@ FreeType 在有无 `FT_INT64` 定义下的实现有所不同，本部分阐述 F
 
 ## 基本思想
 
-FreeType 灰度光栅化器的基本思想是：计算 bitmap 中每一个像素点被覆盖的有向面积 `area`，根据填充规则 与 `$$\frac{area}{pixel\_area}$$` 决定这一像素点的灰度值。而当使用扫描线算法，按水平线扫描时，只有扫描到线才会产生面积的变化，因此只需要计算每条线在包含其的像素点内的信息，每个像素点被覆盖的有向面积可以通过差分推出。这些信息是：
+FreeType 灰度光栅化器的基本思想是：计算 bitmap 中每一个像素点被覆盖的有向面积 `area`，根据填充规则 与 `$$\frac{area}{pixel\_area}$$` 决定这一像素点的灰度值。而当使用扫描线算法，按水平线扫描时，只有扫描到线才会产生面积的变化，因此只需要计算每条线在包含其的像素点内的信息，每个像素点被覆盖的有向面积可以通过差分推出。将每个像素点位置记录的信息称之为 `cell`，`cell` 需要记录的信息是：
 
 - 这条线在 y 轴的增量 `cell_cover`。后续那些不包含线的像素点能够计算得到总的 y 轴覆盖量（可能为负），进而计算得到有向覆盖面积。
 - 这条线左侧的有向面积 `cell_area`。这样在扫描时能够计算当前像素点的有向覆盖面积。
@@ -247,9 +247,79 @@ FreeType 灰度光栅化器的基本思想是：计算 bitmap 中每一个像素
 
 另外还需要注意：
 
+- 在实际实现中，将被覆盖的面积 `cell_cover` 与 y 轴增量 `cell_cover` 都乘上 2，以消除分母
 - 上述过程是一个从起点移动到终点中分数连续相加的过程，需要运用之前提到的 “相同分母的分数连续相加” 的方法来减少精度误差
 - 可能有多条线穿过同一个像素点，因此对 `cell_cover`, `cell_area` 的计算需要累加
 
 此部分对应了方法 [gray_render_scanline](https://gitlab.freedesktop.org/freetype/freetype/-/blob/d2612e1c3ff839595fbf67c8263a07d6bac3aaf5/src/smooth/ftgrays.c#L640) 的实现。
 
 ![scanline](/freetype-gray-raster/scanline.png)
+
+## 线段
+
+如果线段不在水平扫描线内，那么可以拆分成多段水平扫描线，这个过程需要计算从起点开始逐步移动到终点中 y 为整数的点。当 `$$d_y > 0$$`：
+
+- 对于起点部分，移动到该点 y 轴增量为 `$$Pixel - fy_1$$`，x 轴增量为 `$$\frac{(Pixel - fy_1) \cdot d_x}{d_y}$$`
+- 对于中间部分，从上一点移动到该点 y 轴增量为 `$$Pixel$$`，x 轴增量为 `$$\frac{Pixel \cdot d_x}{d_y}$$`
+
+当 `$$d_x < 0$$` 时的计算也是类似的。此部分对应了方法 [gray_render_line](https://gitlab.freedesktop.org/freetype/freetype/-/blob/d2612e1c3ff839595fbf67c8263a07d6bac3aaf5/src/smooth/ftgrays.c#L736) 的实现。
+
+![line](/freetype-gray-raster/line.png)
+
+## 二次贝塞尔曲线
+
+二次贝塞尔曲线细分成多段线段后，可以按多段线段计算。FreeType 在这一过程中使用非递归细分算法，并且预分配了栈顶点数组。
+
+按照 “二次贝塞尔曲线细分的终止条件”，`eps` 取 `$$\frac{Pixel}{4}$$` 时，由于处理 `int32` 数据，所以细分层数不会超过 15（不包含最开始的 3 个顶点），一次细分会多出 2 个顶点，因此非递归算法所需的顶点栈长度取 `16 * 2 + 1`。
+
+- 栈一开始为 `[to, ctrl, from]`，即栈存放的时逆序的数据
+- 每次细分时取栈最后的 3 个点细分为 5 个点
+- 细分为线段时，取栈最后 2 个顶点为线段计算，再弹出
+
+令 `$$d_x = \max(d_x, d_y)$$`，能够计算得到需要的细分层数 `draw`。整个细分过程，可以看作是对 `$$2^{draw}$$` 长度列表的数组后序分治的过程。非叶节点执行的是细分曲线，叶节点得到了线段。
+
+![split_quad](/freetype-gray-raster/split_quad.png)
+
+这个过程并不需要知道当前访问了哪个节点，只需要计算从叶节点到下一个叶节点所需要的经过的节点个数 `split'`，执行 `split' - 1` 次的细分，再执行一次对线段的运算。假设计算 `split'` 过程有 `split' = lowbit(j) + 1`，这里可以使用 `lowbit(j)` 的结果，通过循环右移的方式执行细分与线段的运算，并不需要将 `split'` 的值算出来。`lowbit` 的运算为 `lowbit(x) = x & -x`，计算快，而计算 `split'` 需要用到 `trailing_zeros`，这一方法的性能取决于具体硬件。
+
+此部分对应了方法 [gray_render_conic](https://gitlab.freedesktop.org/freetype/freetype/-/blob/d2612e1c3ff839595fbf67c8263a07d6bac3aaf5/src/smooth/ftgrays.c#L1013) 的实现。
+
+## 三次贝塞尔曲线
+
+三次贝塞尔曲线的处理与二次贝塞尔曲线类似，不同的是：
+
+- `eps` 取 `$$\frac{Pixel}{2}$$`，此时查表可知细分层数不会超过 15，顶点栈长度取 `16 * 3 + 1`
+- `$$d_x$$` 细分时无法恰好对半分，因此不能使用 `$$2^n$$` 长度数组分治 trick，需要在每次细分时判断是否满足细分终止条件
+
+此部分对应了方法 [gray_render_cubic](https://gitlab.freedesktop.org/freetype/freetype/-/blob/d2612e1c3ff839595fbf67c8263a07d6bac3aaf5/src/smooth/ftgrays.c#L1281) 的实现。
+
+## Bitmap 生成
+
+经过上述的处理后，得到了所有 `cell` 的结果，进而可以通过差分的方法得到所有像素点被覆盖的有向面积。本部分对于 y 轴的覆盖量与面积覆盖量均取实现上的意义，即取 2 倍面积。
+
+假设在水平扫描线过程中，维护 y 轴的覆盖量 `cover` 与单个像素面积的覆盖量 `area`。当遍历到像素点 `$$(x,y)$$` 时，若该处没有变化值：
+
+```math
+\begin{aligned}
+cover_{x,y} &= cover_{x-1,y} \\
+area_{x,y} &= cover_{x,y} \cdot Pixel \cdot 2 \\
+\end{aligned}
+```
+
+当有变化值时：
+
+```math
+\begin{aligned}
+cover_{x,y} &= cover_{x-1,y} + cell\_cover_{x,y} \\
+area_{x,y} &= cover_{x,y} \cdot Pixel \cdot 2 - cell\_area_{x,y} \\
+\end{aligned}
+```
+
+![sweep](/freetype-gray-raster/sweep.png)
+
+灰度取值范围为 `$$[0,255]$$`，令 `$$coverage = \frac{255 \cdot area}{2 \cdot Pixel^2}$$`，那么根据填充规则：
+
+- 当为非零时，颜色为 `$$\min(|coverage|,255)$$`
+- 当为奇偶时，颜色为 `$$\left|\operatorname{mod}\left(\left(coverage-255\right),\ 255\cdot2\right)-255\right|$$`
+
+![coverage](/freetype-gray-raster/coverage.png)
