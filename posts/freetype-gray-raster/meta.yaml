@@ -1,4 +1,4 @@
-date: "2024-08-25"
+date: "2024-09-08"
 title: "FreeType 灰度光栅化器的实现"
 tags: ["render"]
 abstract: "本文以笔者的理解阐述 freetype 灰度光栅化器 ftgrays 代码的核心实现"
