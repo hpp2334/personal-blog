@@ -1,9 +1,7 @@
-import 'katex/dist/katex.min.css';
-import '@waline/client/waline.css';
+import "katex/dist/katex.min.css";
 import type { AppProps } from "next/app";
 import { Noto_Sans } from "next/font/google";
 import { useEffect } from "react";
-import { Analytics } from '@vercel/analytics/react';
 
 const noto = Noto_Sans({
   weight: ["400", "500", "600", "700"],
@@ -11,20 +9,20 @@ const noto = Noto_Sans({
 });
 
 function unregisterPWA() {
-  if ('serviceWorker' in navigator) {
+  if ("serviceWorker" in navigator) {
     navigator.serviceWorker.getRegistrations().then(function (registrations) {
       for (const registration of registrations) {
-        registration.unregister()
+        registration.unregister();
       }
-    })
+    });
   }
 }
 
 export default function App({ Component, pageProps }: AppProps) {
   // https://github.com/shadowwalker/next-pwa/issues/315
   useEffect(() => {
-    unregisterPWA()
-  }, [])
+    unregisterPWA();
+  }, []);
 
   return (
     <>
@@ -54,7 +52,6 @@ export default function App({ Component, pageProps }: AppProps) {
         }
       `}</style>
       <Component {...pageProps} />
-      <Analytics />
     </>
   );
 }

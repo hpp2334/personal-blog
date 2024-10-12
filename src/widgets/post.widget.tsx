@@ -38,7 +38,6 @@ const InlineMath = dynamic(() =>
   import("react-katex").then((v) => v.InlineMath)
 );
 const BlockMath = dynamic(() => import("react-katex").then((v) => v.BlockMath));
-const Waline = dynamic(() => import("./waline").then((v) => v.Waline));
 
 const unescapeStr = (s: string) => {
   return s
@@ -446,12 +445,6 @@ export function PostContentWidget() {
             })()}
           </React.Fragment>
         ))}
-      </div>
-      <div className={styles.comments}>
-        <Waline
-          path={typeof location === "undefined" ? "/" : location.pathname}
-          serverURL={"https://comments.hpp2334.com"}
-        />
       </div>
     </div>
   );
