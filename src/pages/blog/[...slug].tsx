@@ -1,7 +1,13 @@
 import { GetStaticPaths, GetStaticProps } from "next";
 import { getPost, getPosts, getPostsSlug } from "@/data/posts.data";
 import Link from "next/link";
-import { getPostHref, getTag, Post, PostMeta, PostStore } from "@/core/post.core";
+import {
+  getPostHref,
+  getTag,
+  Post,
+  PostMeta,
+  PostStore,
+} from "@/core/post.core";
 import { marked } from "marked";
 import constate from "constate";
 import React, { useMemo } from "react";
@@ -28,16 +34,13 @@ export const getStaticPaths: GetStaticPaths<UrlQuery> = async () => {
   const metas = await getPosts();
 
   return {
-    paths: getPostsSlug(metas).map((t) => ([
-      {
-        params: t,
-        locale: 'cn',
-      },
-      {
-        params: t,
-        locale: 'en',
-      }
-    ])).flat(),
+    paths: getPostsSlug(metas)
+      .map((t) => [
+        {
+          params: t,
+        },
+      ])
+      .flat(),
     fallback: false, // can also be true or 'blocking'
   };
 };
@@ -56,8 +59,8 @@ export const getStaticProps: GetStaticProps<Props, UrlQuery> = async (
 
   const postStore: PostStore = {
     metaStore: post.meta.toStore(),
-    rawStr: post.rawStr
-  }
+    rawStr: post.rawStr,
+  };
 
   return {
     props: {
@@ -71,7 +74,7 @@ function PostContent() {
 }
 
 function PostHeader({ meta }: { meta: PostMeta }) {
-  const router = useRouter()
+  const router = useRouter();
   return (
     <div className={styles.header}>
       <div className={styles.date}>{fmtDate(meta.date, "YYYY-MM-DD")}</div>
@@ -127,12 +130,15 @@ function PostHeader({ meta }: { meta: PostMeta }) {
 export default function PostDetail({ postStore }: Props) {
   const post: Post = {
     meta: new PostMeta(postStore.metaStore),
-    rawStr: postStore.rawStr
-  }
-  const router = useRouter()
+    rawStr: postStore.rawStr,
+  };
+  const router = useRouter();
   return (
     <>
-      <SEO subTitle={post.meta.getTitle(router.locale)} description={post.meta.getAbstract(router.locale)} />
+      <SEO
+        subTitle={post.meta.getTitle(router.locale)}
+        description={post.meta.getAbstract(router.locale)}
+      />
       <AppBarMenuMask />
       <FullscreenScrollable>
         <div className={styles.mask} />

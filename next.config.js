@@ -2,7 +2,11 @@ const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   reactStrictMode: true,
+  images: {
+    unoptimized: true,
+  },
   webpack: (config) => {
     config.plugins.push(
       new webpack.DefinePlugin({
@@ -11,11 +15,6 @@ const nextConfig = {
       })
     );
     return config;
-  },
-  i18n: {
-    locales: ['en', 'cn'],
-    defaultLocale: 'cn',
-    localeDetection: false,
   },
 };
 
