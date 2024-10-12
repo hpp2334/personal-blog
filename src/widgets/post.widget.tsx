@@ -1,5 +1,6 @@
 import "katex/dist/katex.min.css";
-import { marked } from "marked";
+import { marked, Tokens } from "marked";
+import type * as M from "marked";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import NextLink from "next/link";
 import NextImage from "next/image";
@@ -70,7 +71,7 @@ function usePost({
 }
 export const [PostProvider, usePostContext] = constate(usePost);
 
-function CommonToken({ token }: { token: marked.Token }) {
+function CommonToken({ token }: { token: M.Token }) {
   if (
     "tokens" in token &&
     token.tokens &&
@@ -108,12 +109,12 @@ function CommonToken({ token }: { token: marked.Token }) {
     case "image":
       return <Image token={token} />;
     case "list":
-      return <List token={token} />;
+      return <List token={token as M.Tokens.List} />;
   }
   return null;
 }
 
-function CommonTokens({ tokens }: { tokens: marked.Token[] }) {
+function CommonTokens({ tokens }: { tokens: M.Token[] }) {
   return (
     <>
       {tokens.map((token, idx) => (
@@ -123,7 +124,7 @@ function CommonTokens({ tokens }: { tokens: marked.Token[] }) {
   );
 }
 
-function Heading({ token }: { token: marked.Tokens.Heading }) {
+function Heading({ token }: { token: M.Tokens.Heading | M.Tokens.Generic }) {
   const Tag = `h${token.depth}` as "h1" | "h2" | "h3" | "h4";
 
   return (
@@ -135,16 +136,20 @@ function Heading({ token }: { token: marked.Tokens.Heading }) {
         [styles.h3]: token.depth === 3,
       })}
     >
-      {token.tokens.map((token, idx) => (
+      {token.tokens?.map((token, idx) => (
         <React.Fragment key={idx}>
           <CommonToken token={token} />
         </React.Fragment>
-      ))}
+      )) ?? []}
     </Tag>
   );
 }
 
-function Paragraph({ token }: { token: marked.Tokens.Paragraph }) {
+function Paragraph({
+  token,
+}: {
+  token: M.Tokens.Paragraph | M.Tokens.Generic;
+}) {
   return (
     <p className={styles.paragraph}>
       <CommonToken token={token} />
@@ -152,7 +157,7 @@ function Paragraph({ token }: { token: marked.Tokens.Paragraph }) {
   );
 }
 
-function List({ token }: { token: marked.Tokens.List }) {
+function List({ token }: { token: M.Tokens.List }) {
   const Tag = token.ordered ? "ol" : "ul";
 
   return (
@@ -166,23 +171,23 @@ function List({ token }: { token: marked.Tokens.List }) {
   );
 }
 
-function Strong({ token }: { token: marked.Tokens.Strong }) {
+function Strong({ token }: { token: M.Tokens.Strong | M.Tokens.Generic }) {
   return (
     <strong className={styles.strong}>
-      <CommonTokens tokens={token.tokens} />
+      <CommonTokens tokens={token.tokens ?? []} />
     </strong>
   );
 }
 
-function Link({ token }: { token: marked.Tokens.Link }) {
+function Link({ token }: { token: M.Tokens.Link | M.Tokens.Generic }) {
   return (
     <NextLink href={token.href} target="_blank" className={styles.link}>
-      <CommonTokens tokens={token.tokens} />
+      <CommonTokens tokens={token.tokens ?? []} />
     </NextLink>
   );
 }
 
-function Image({ token }: { token: marked.Tokens.Image }) {
+function Image({ token }: { token: M.Tokens.Image | M.Tokens.Generic }) {
   return (
     <span className={styles.imageContainer}>
       <NextImage
@@ -216,7 +221,7 @@ function WrapperSandpack({ entryKey }: { entryKey: string }) {
   );
 }
 
-function Code({ token }: { token: marked.Tokens.Code }) {
+function Code({ token }: { token: M.Tokens.Code | M.Tokens.Generic }) {
   if (token.lang === "yaml:stackblitz") {
     const obj = yaml.parse(token.text);
     return <Stackblitz {...obj} />;
@@ -250,7 +255,11 @@ function Code({ token }: { token: marked.Tokens.Code }) {
   return <Highlighter language={token.lang ?? "js"}>{token.text}</Highlighter>;
 }
 
-function BlockQuote({ token }: { token: marked.Tokens.Blockquote }) {
+function BlockQuote({
+  token,
+}: {
+  token: M.Tokens.Blockquote | M.Tokens.Generic;
+}) {
   return (
     <div className={styles.blockQuote}>
       <CommonToken token={token} />
@@ -258,7 +267,7 @@ function BlockQuote({ token }: { token: marked.Tokens.Blockquote }) {
   );
 }
 
-function Table({ token }: { token: marked.Tokens.Table }) {
+function Table({ token }: { token: M.Tokens.Table }) {
   return (
     <table className={styles.customTable}>
       <thead>
@@ -291,7 +300,7 @@ function TocItem({
   active,
   nativeElement,
 }: {
-  token: marked.Tokens.Heading;
+  token: M.Tokens.Heading | M.Tokens.Generic;
   depth: 1 | 2 | 3;
   active: boolean;
   nativeElement: Element | null;
@@ -327,7 +336,7 @@ function TocItem({
   );
 }
 
-function Toc({ tokens }: { tokens: marked.TokensList }) {
+function Toc({ tokens }: { tokens: M.TokensList }) {
   const [signal, setSignal] = useState(false);
   const router = useRouter();
   const scrollTop = useGlobalScroll();
@@ -432,13 +441,13 @@ export function PostContentWidget() {
                 case "paragraph":
                   return <Paragraph token={token} />;
                 case "list":
-                  return <List token={token} />;
+                  return <List token={token as M.Tokens.List} />;
                 case "code":
                   return <Code token={token} />;
                 case "blockquote":
                   return <BlockQuote token={token} />;
                 case "table":
-                  return <Table token={token} />;
+                  return <Table token={token as Tokens.Table} />;
                 default:
                   return <CommonToken token={token} />;
               }
